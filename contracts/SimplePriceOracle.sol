@@ -39,7 +39,21 @@ contract SimplePriceOracle is PriceOracle {
             if (totalNum == 0) {
                 return 0;
             } else {
-                return totalPrice / totalNum;
+                uint price = totalPrice / totalNum;
+                uint price1 = prices1[address(CErc20(address(cToken)).underlying())];
+                uint price2 = prices2[address(CErc20(address(cToken)).underlying())];
+                uint price3 = prices3[address(CErc20(address(cToken)).underlying())];
+                if (price1 < price) {
+                    return price2 < price3 ? price2 : price3;
+                }
+                else if (price2 < price) {
+                    return price1 < price3 ? price1 : price3;
+                }
+                else if (price3 < price) {
+                    return price1 < price2 ? price1 : price2;
+                } else { //价格一样
+                    return price1;
+                }
             }
         }
     }
