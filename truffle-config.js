@@ -57,6 +57,13 @@ module.exports = {
       from:"0xB95a8dbB263EF5FBAF07d0577ec8738b0B35751E"
      },
 
+     mainnet: {
+      host: "http-mainnet-node.huobichain.com",     // Localhost (default: none)
+      provider: () => new HDWalletProvider("0x8b1f8334ebd0050f524a39c6c97e67e0418e617114466248d80e14fd3a4499c6", `https://http-mainnet-node.huobichain.com`),
+      network_id: "*",       // Any network (default: none)
+      from:"0xB95a8dbB263EF5FBAF07d0577ec8738b0B35751E"
+     },
+
     // Another network with more advanced options...
     // advanced: {
       // port: 8777,             // Custom port

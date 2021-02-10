@@ -4,8 +4,10 @@ import "./PriceOracle.sol";
 import "./CErc20.sol";
 
 contract SimplePriceOracle is PriceOracle {
-    mapping(address => uint) prices;
-    event PricePosted(address asset, uint previousPriceMantissa, uint requestedPriceMantissa, uint newPriceMantissa);
+    mapping(address => uint) prices1;
+    mapping(address => uint) prices2;
+    mapping(address => uint) prices3;
+    event PricePosted(uint index, address asset, uint previousPriceMantissa, uint requestedPriceMantissa, uint newPriceMantissa);
 
     address public admin;
 
@@ -19,36 +21,48 @@ contract SimplePriceOracle is PriceOracle {
     }
 
     function getUnderlyingPrice(CToken cToken) public view returns (uint) {
-        if (compareStrings(cToken.symbol(), "cWUSDT")) {
+        if (compareStrings(cToken.symbol(), "cUSDT")) {
             return 1e18;
         } else {
-            return prices[address(CErc20(address(cToken)).underlying())];
+            uint totalPrice = 0;
+            uint totalNum = 0;
+            if (prices1[address(CErc20(address(cToken)).underlying())] != 0) {
+                totalPrice += prices1[address(CErc20(address(cToken)).underlying())];
+                totalNum += 1;
+            } else if (prices2[address(CErc20(address(cToken)).underlying())] != 0) {
+                totalPrice += prices2[address(CErc20(address(cToken)).underlying())];
+                totalNum += 1;
+            } else if (prices1[address(CErc20(address(cToken)).underlying())] != 0) {
+                totalPrice += prices3[address(CErc20(address(cToken)).underlying())];
+                totalNum += 1;
+            }
+            if (totalNum == 0) {
+                return 0;
+            } else {
+                return totalPrice / totalNum;
+            }
         }
     }
 
-    function setUnderlyingPrice(CToken cToken, uint underlyingPriceMantissa) public {
+    function setDirectPrice(uint index, address asset, uint price) public {
         require(msg.sender == admin, "NOT_ADMIN");
-        address asset = address(CErc20(address(cToken)).underlying());
-        emit PricePosted(asset, prices[asset], underlyingPriceMantissa, underlyingPriceMantissa);
-        prices[asset] = underlyingPriceMantissa;
+        if (index == 1) {
+            emit PricePosted(index, asset, prices1[asset], price, price);
+            prices1[asset] = price;
+        } else if (index == 2) {
+            emit PricePosted(index, asset, prices2[asset], price, price);
+            prices2[asset] = price;
+        } else if (index == 3) {
+            emit PricePosted(index, asset, prices3[asset], price, price);
+            prices3[asset] = price;
+        }
     }
 
-    function setDirectPrice(address asset, uint price) public {
-        require(msg.sender == admin, "NOT_ADMIN");
-        emit PricePosted(asset, prices[asset], price, price);
-        prices[asset] = price;
-    }
-
-    function setBulkDirectPrice(address[] memory assets, uint[] memory setPrices) public {
+    function setBulkDirectPrice(uint index, address[] memory assets, uint[] memory setPrices) public {
         require (assets.length == setPrices.length, "illegal request");
         for (uint i = 0; i < setPrices.length; i ++) {
-            setDirectPrice(assets[i], setPrices[i]);
+            setDirectPrice(index, assets[i], setPrices[i]);
         }
-    }
-
-    // v1 price oracle interface for use as backing of proxy
-    function assetPrices(address asset) external view returns (uint) {
-        return prices[asset];
     }
 
     function compareStrings(string memory a, string memory b) internal pure returns (bool) {
