@@ -32,7 +32,7 @@ contract SimplePriceOracle is PriceOracle {
             } else if (prices2[address(CErc20(address(cToken)).underlying())] != 0) {
                 totalPrice += prices2[address(CErc20(address(cToken)).underlying())];
                 totalNum += 1;
-            } else if (prices1[address(CErc20(address(cToken)).underlying())] != 0) {
+            } else if (prices3[address(CErc20(address(cToken)).underlying())] != 0) {
                 totalPrice += prices3[address(CErc20(address(cToken)).underlying())];
                 totalNum += 1;
             }
