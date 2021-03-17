@@ -7,9 +7,10 @@ import "./CToken.sol";
  * @notice CToken which wraps Ether
  * @author Compound
  */
-contract CEther is CToken {
+contract CEther is CToken,CErc20Storage {
     /**
      * @notice Construct a new CEther money market
+     * @param underlying_ The address of the underlying asset
      * @param comptroller_ The address of the Comptroller
      * @param interestRateModel_ The address of the interest rate model
      * @param initialExchangeRateMantissa_ The initial exchange rate, scaled by 1e18
@@ -18,7 +19,8 @@ contract CEther is CToken {
      * @param decimals_ ERC-20 decimal precision of this token
      * @param admin_ Address of the administrator of this token
      */
-    constructor(ComptrollerInterface comptroller_,
+    constructor(address underlying_,
+                ComptrollerInterface comptroller_,
                 InterestRateModel interestRateModel_,
                 uint initialExchangeRateMantissa_,
                 string memory name_,
@@ -32,6 +34,8 @@ contract CEther is CToken {
 
         // Set the proper admin now that initialization is done
         admin = admin_;
+
+        underlying = underlying_;
     }
 
 
