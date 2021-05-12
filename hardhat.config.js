@@ -4,7 +4,7 @@ require("hardhat-spdx-license-identifier");
 require('hardhat-deploy');
 require ('hardhat-abi-exporter');
 require("@nomiclabs/hardhat-ethers");
-require("dotenv/config")
+require("dotenv").config();
 
 let accounts = [];
 var fs = require("fs");
@@ -12,6 +12,8 @@ var read = require('read');
 var util = require('util');
 const keythereum = require("keythereum");
 const prompt = require('prompt-sync')();
+
+const { API_URL, PRIVATE_KEY } = process.env;
 (async function() {
     try {
         const root = '.keystore';
@@ -124,7 +126,12 @@ module.exports = {
             saveDeployments: true,
             tags: ["test", "local"],
             chainID: 999,
-        }
+        },
+        hecotest: {
+            url: "https://http-testnet.hecochain.com",
+            //accounts: [`0xcffee5a02647e57260a4c4641016fa745b1f567b204c97f5a3f73103404aced2`]
+            accounts: [PRIVATE_KEY]
+        },
     },
     solidity: {
         compilers: [
