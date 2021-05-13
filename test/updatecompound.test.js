@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 const { TOKEN, CONTRACT, RICHADDRESS } = require('../config/address.js');
-const { time } = require('@openzeppelin/test-helpers');
 
 describe("Compound", () => {
 
@@ -15,13 +14,6 @@ describe("Compound", () => {
             params: [richAddress],
         });
         this.caller = await ethers.getSigner(richAddress);
-        richAddress = RICHADDRESS.HPT;
-        await network.provider.request({
-            method: "hardhat_impersonateAccount",
-            params: [richAddress],
-        });
-        this.hptAccount = await ethers.getSigner(richAddress);
-        //await this.caller.sendTransaction({to: this.hptAccount.address, value: '1000000000000000000'});
 
         this.erc20HBTC = await ethers.getContractAt('CTokenInterface', TOKEN.HBTC);
         this.erc20HETH = await ethers.getContractAt('CTokenInterface', TOKEN.HETH);
@@ -150,19 +142,13 @@ describe("Compound", () => {
         this.cerc20USDT = await ethers.getContractAt('CErc20', usdtDelegator.address);
         await this.comptroller.connect(this.admin)._supportMarket(this.cerc20USDT.address);
         await this.comptroller.connect(this.admin)._setCollateralFactor(this.cerc20USDT.address, '900000000000000000');
-        await this.comptroller.connect(this.admin)._addCompMarkets([
-            this.cerc20HBTC.address,
-            this.cerc20HETH.address,
-            this.cEtherHT.address,
-            this.cerc20HPT.address,
-            this.cerc20USDT.address,
-            this.cerc20HUSD.address
-        ]);
 
-        await this.erc20HPT.connect(this.hptAccount).transfer(this.comptroller.address, '1000000000000000000000000');        
-        await this.comptroller.connect(this.admin)._setCompRate('100000000000000000000');
-        blockNumberBefor = await ethers.provider.getBlockNumber();
-        //console.dir(blockNumberBefor);
+        //更新Comptroller
+        let ComptrollerG7Factory = await ethers.getContractFactory('ComptrollerG7');
+        this.comptrollerG7Contract = await ComptrollerG7Factory.deploy();
+        await unitroller._setPendingImplementation(this.comptrollerG7Contract.address);
+        await this.comptrollerG7Contract._become(unitroller.address);
+        this.comptroller = await ethers.getContractAt('ComptrollerG7', unitroller.address);
 
     });
 
@@ -258,24 +244,63 @@ describe("Compound", () => {
         expect(balanceAfter.sub(balanceBefore)).equal('90000000');
     });
 
-    it("Claim", async function() {
-        await this.comptroller.refreshCompSpeeds();
-        //console.log(await this.erc20HPT.balanceOf(this.hptAccount.address));
-        await ethers.provider.send("evm_increaseTime", [60])
-        await network.provider.send("evm_mine", []);
-        await network.provider.send("evm_mine", []);
-        await network.provider.send("evm_mine", []);
+    it("RepayBorrow", async function() {
+        balanceBefore = await this.erc20HBTC.balanceOf(this.caller.address);
+        await this.erc20HBTC.connect(this.caller).approve(this.cerc20HBTC.address, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        await this.cerc20HBTC.connect(this.caller).repayBorrow('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        balanceAfter = await this.erc20HBTC.balanceOf(this.caller.address);
+        expect(balanceBefore.sub(balanceAfter)).to.be.above('900000000000000000');
+        await this.erc20HBTC.connect(this.caller).approve(this.cerc20HBTC.address, '0');
+
+        balanceBefore = await this.erc20HETH.balanceOf(this.caller.address);
+        await this.erc20HETH.connect(this.caller).approve(this.cerc20HETH.address, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        await this.cerc20HETH.connect(this.caller).repayBorrow('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        balanceAfter = await this.erc20HETH.balanceOf(this.caller.address);
+        expect(balanceBefore.sub(balanceAfter)).to.be.above('900000000000000000');
+        await this.erc20HETH.connect(this.caller).approve(this.cerc20HBTC.address, '0');
+
+        balanceBefore = await ethers.provider.getBalance(this.caller.address);
+        await this.cEtherHT.connect(this.caller).repayBorrow({value: '900000000000000000'});
+        balanceBefore = await ethers.provider.getBalance(this.caller.address);
+        expect(balanceBefore.sub(balanceAfter)).to.be.above('900000000000000000');
 
         balanceBefore = await this.erc20HPT.balanceOf(this.caller.address);
-        await this.comptroller.claimComp(this.caller.address);
+        await this.erc20HPT.connect(this.caller).approve(this.cerc20HPT.address, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        await this.cerc20HPT.connect(this.caller).repayBorrow('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
         balanceAfter = await this.erc20HPT.balanceOf(this.caller.address);
-        expect(balanceAfter.sub(balanceBefore)).to.be.above('0');
-        //console.dir(balanceAfter.sub(balanceBefore).toString());
-        blockNumberAfter = await ethers.provider.getBlockNumber();
-        //console.dir(blockNumberAfter);
+        expect(balanceBefore.sub(balanceAfter)).to.be.above('900000000000000000');
+        await this.erc20HPT.connect(this.caller).approve(this.cerc20HBTC.address, '0');
+        
+        balanceBefore = await this.erc20USDT.balanceOf(this.caller.address);
+        await this.erc20USDT.connect(this.caller).approve(this.cerc20USDT.address, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        await this.cerc20USDT.connect(this.caller).repayBorrow('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        balanceAfter = await this.erc20USDT.balanceOf(this.caller.address);
+        expect(balanceBefore.sub(balanceAfter)).to.be.above('900000000000000000');
+        await this.erc20USDT.connect(this.caller).approve(this.cerc20HBTC.address, '0');
+
+        balanceBefore = await this.erc20HUSD.balanceOf(this.caller.address);
+        await this.erc20HUSD.connect(this.caller).approve(this.cerc20HUSD.address, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        await this.cerc20HUSD.connect(this.caller).repayBorrow('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        balanceAfter = await this.erc20HUSD.balanceOf(this.caller.address);
+        expect(balanceBefore.sub(balanceAfter)).to.be.above('90000000');
+        await this.erc20HUSD.connect(this.caller).approve(this.cerc20HBTC.address, '0');
     });
 
     it("Redeem", async function() {
+        balanceBefore = await this.erc20HBTC.balanceOf(this.caller.address);
+        await this.cerc20HBTC.connect(this.caller).redeemUnderlying('1000000000000000000');
+        balanceAfter = await this.erc20HBTC.balanceOf(this.caller.address);
+        expect(balanceAfter.sub(balanceBefore)).equal('1000000000000000000');
+
+        balanceBefore = await this.erc20HETH.balanceOf(this.caller.address);
+        await this.cerc20HETH.connect(this.caller).redeemUnderlying('1000000000000000000');
+        balanceAfter = await this.erc20HETH.balanceOf(this.caller.address);
+        expect(balanceAfter.sub(balanceBefore)).equal('1000000000000000000');
+
+        balanceBefore = await ethers.provider.getBalance(this.caller.address);
+        await this.cEtherHT.connect(this.caller).redeemUnderlying('1000000000000000000');
+        balanceAfter = await ethers.provider.getBalance(this.caller.address);
+        expect(balanceAfter.sub(balanceBefore)).to.be.above('900000000000000000');
 
     });
 

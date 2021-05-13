@@ -1,6 +1,11 @@
-const { expect } = require("chai");
-const { TOKEN, CONTRACT, RICHADDRESS } = require('../config/address.js');
+const chai = require("chai");
+const expect = chai.expect;
+const { TOKEN, CONTRACT, RICHADDRESS, POOL } = require('../config/address.js');
 const { time } = require('@openzeppelin/test-helpers');
+const { chaiAsPromised } = require('chai-as-promised');
+//console.dir(chai);
+//chai.should()
+//chai.use(chaiAsPromised)
 
 describe("Compound", () => {
 
@@ -56,6 +61,7 @@ describe("Compound", () => {
         await this.comptroller.connect(this.admin)._setMaxAssets('10');
         await this.comptroller.connect(this.admin)._setCloseFactor('900000000000000000');
         await this.comptroller.connect(this.admin)._setLiquidationIncentive('1100000000000000000');
+        this.unitroller = unitroller;
 
         let hbtcDelegator = await this.CErc20DelegatorFactory.deploy(
             TOKEN.HBTC,
@@ -162,7 +168,7 @@ describe("Compound", () => {
         await this.erc20HPT.connect(this.hptAccount).transfer(this.comptroller.address, '1000000000000000000000000');        
         await this.comptroller.connect(this.admin)._setCompRate('100000000000000000000');
         blockNumberBefor = await ethers.provider.getBlockNumber();
-        //console.dir(blockNumberBefor);
+        console.dir(blockNumberBefor);
 
     });
 
@@ -260,6 +266,12 @@ describe("Compound", () => {
 
     it("Claim", async function() {
         await this.comptroller.refreshCompSpeeds();
+        //更新Comptroller
+        let ComptrollerG7Factory = await ethers.getContractFactory('ComptrollerG7');
+        this.comptrollerG7Contract = await ComptrollerG7Factory.deploy();
+        await this.unitroller._setPendingImplementation(this.comptrollerG7Contract.address);
+        await this.comptrollerG7Contract._become(this.unitroller.address);
+        this.comptroller = await ethers.getContractAt('ComptrollerG7', this.unitroller.address);
         //console.log(await this.erc20HPT.balanceOf(this.hptAccount.address));
         await ethers.provider.send("evm_increaseTime", [60])
         await network.provider.send("evm_mine", []);
@@ -268,14 +280,28 @@ describe("Compound", () => {
 
         balanceBefore = await this.erc20HPT.balanceOf(this.caller.address);
         await this.comptroller.claimComp(this.caller.address);
+
         balanceAfter = await this.erc20HPT.balanceOf(this.caller.address);
         expect(balanceAfter.sub(balanceBefore)).to.be.above('0');
-        //console.dir(balanceAfter.sub(balanceBefore).toString());
+        console.dir(balanceAfter.sub(balanceBefore).toString());
         blockNumberAfter = await ethers.provider.getBlockNumber();
-        //console.dir(blockNumberAfter);
+        console.dir(blockNumberAfter);
     });
 
-    it("Redeem", async function() {
+    it("AddClaimInfo", async function() {
+        let iface = new ethers.utils.Interface(["function claim(uint256 _pid)"])
+        let claimBytes = iface.encodeFunctionData("claim", ['1']);
+        await this.comptroller.connect(this.admin)._addClaimInfo(TOKEN.DEP, TOKEN.DEP, POOL.DEP, claimBytes);
+        let claimInfo = await this.comptroller.claimInfos(TOKEN.DEP);
+        //console.dir(claimInfo);
+        expect(claimInfo.token).equal(TOKEN.DEP);
+        expect(claimInfo.pool).equal(POOL.DEP);
+        expect(claimInfo.method).equal(claimBytes);
+
+        //await this.comptroller.connect(this.admin)._addClaimInfo(TOKEN.DEP, TOKEN.DEP, POOL.DEP, claimBytes).should.be.rejectWith('already added');
+        //await this.comptroller.connect(this.admin)._addClaimInfo(TOKEN.DEP, TOKEN.DEP, POOL.DEP, claimBytes);
+
+        //console.dir(clamBytes);
 
     });
 
