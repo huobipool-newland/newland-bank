@@ -1,4 +1,6 @@
 
+const network = require('../networks/hceo-self.json');
+
 //部署预言机
 module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnnamedAccounts}) => {
     //预言机
@@ -6,7 +8,7 @@ module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnna
     const {deployer, admin} = await getNamedAccounts();
     //部署AdminStorage合约
     await deploy('Unitroller', {
-        from: deployer,
+        from: network.Admins.priceOracleAdmin,
         args: [],
         log: true,
     });
