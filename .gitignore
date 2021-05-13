@@ -1,5 +1,9 @@
 build
 node_modules
 abi
-artifacts
+
 cache
+artifacts
+build
+*.env
+deployments
