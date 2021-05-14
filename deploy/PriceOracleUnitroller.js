@@ -1,16 +1,17 @@
-
-//部署预言机
+const network = require('../networks/hceo-self.json');
+//部署预言
 module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnnamedAccounts}) => {
     //预言机
-    const {deploy} = deployments;
+    const {deploy,execute} = deployments;
     const {deployer, admin} = await getNamedAccounts();
     //部署AdminStorage合约
-    await deploy('PriceOracleProxy', {
+    await deploy('PriceOracleUnitroller', {
         from: deployer,
         args: [],
-        log: true
+        log: true,
+        contract:'Unitroller'
     });
 };
 
-module.exports.tags = ['PriceOracleProxy'];
+module.exports.tags = ['PriceOracleUnitroller'];
 module.exports.dependencies = [];
