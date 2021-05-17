@@ -1,5 +1,5 @@
 
-const network = require('../networks/hceo-self.json');
+const network = require('../networks/heco-self.json');
 //部署预言机
 module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnnamedAccounts}) => {
     //预言机
