@@ -1,5 +1,4 @@
-
-const network = require('../networks/hceo-self.json');
+const network = require('../networks/hceo-test.json');
 
 // const Comptroller = artifacts.require('Comptroller');
 //部署预言机
@@ -8,37 +7,39 @@ module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnna
     const {deploy,execute,getArtifact} = deployments;
     const {deployer, admin} = await getNamedAccounts();
     const comptroller =await deployments.get('Comptroller');
-    const comtrollerUnitroller =await deployments.get('ComtrollerUnitroller');
+    const comptrollerUnitroller =await deployments.get('ComptrollerUnitroller');
     const priceOracleUnitroller =await deployments.get('PriceOracleUnitroller');
-    const simplePriceOracle =await deployments.get('SimplePriceOracle');
+    const priceOracleProxy =await deployments.get('PriceOracleProxy');
+    const priceOracle = await ethers.getContractAt(priceOracleProxy.abi,priceOracleUnitroller.address,deployer);
 
-    await execute('ComtrollerUnitroller', {from: deployer,log:true}, '_setPendingImplementation',comptroller.address);
-    await execute('Comptroller', {from: deployer,log:true}, '_become',comtrollerUnitroller.address);
-    await execute('ComtrollerUnitroller', {from: deployer,log:true}, '_setPendingAdmin',deployer);
-    const unitroller = await ethers.getContractAt(comtrollerUnitroller.abi,comtrollerUnitroller.address,deployer);
+    await execute('ComptrollerUnitroller', {from: deployer,log:true}, '_setPendingImplementation',comptroller.address);
+
+    await execute('ComptrollerUnitroller', {from: deployer,log:true}, '_setPendingAdmin',deployer);
+
+    await execute('Comptroller', {from: deployer,log:true}, '_become',comptrollerUnitroller.address);
+    const unitroller = await ethers.getContractAt(comptrollerUnitroller.abi,comptrollerUnitroller.address,deployer);
 
     await unitroller._acceptAdmin();
 
-    const proxy=await ethers.getContractAt(comptroller.abi,comtrollerUnitroller.address,deployer);
-    await proxy._setPriceOracle(comtrollerUnitroller.address);
+    const proxy=await ethers.getContractAt(comptroller.abi,comptrollerUnitroller.address,deployer);
+    await proxy._setPriceOracle(priceOracle.address);
     await proxy._setMaxAssets(deployer);
     await proxy._setCloseFactor(deployer);
     await proxy._setLiquidationIncentive(deployer);
 
     let tokens = network['Tokens'];
-    let ctoken;
-    for (let token in network['Tokens']) {
 
-        token = tokens[token];
-        ctoken =await deployments.get('CErc20Delegator_'+token.name);
+
+    for (let index in tokens) {
+        let token=tokens[index];
+        let tokenName='CErc20Delegator_'+token.name;
+        const ctoken =await deployments.get(tokenName);
         await proxy._supportMarket(ctoken.address);
         await proxy._setCollateralFactor(ctoken.address,token.collateralFactor);
-
-        await execute('SimplePriceOracle', {from: network.Admins.priceOracleFeeder,log:true}, 'setUnderlyingPrice',[cToken.address,token.initPrice]);
-
+        await execute('SimplePriceOracle', {from: network.Admins.priceOracleFeeder,log:true}, 'setUnderlyingPrice',[ctoken.address,token.initPrice]);
     }
 
-    console.log("comtrolle 部署完成");
+    console.log("comptrolle 部署完成");
 
 
 };

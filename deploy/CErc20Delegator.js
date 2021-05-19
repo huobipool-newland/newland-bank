@@ -1,5 +1,4 @@
-
-const network = require('../networks/hceo-self.json');
+const network = require('../networks/hceo-test.json');
 //部署预言机
 module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnnamedAccounts}) => {
     //预言机
@@ -7,7 +6,7 @@ module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnna
     const {deployer, admin} = await getNamedAccounts();
     //部署AdminStorage合约
 
-    const comptrollerUnitroller =await deployments.get('ComptrollerUnitroller');
+    const comptroller =await deployments.get('Comptroller');
     let tokens = network['Tokens'];
     for (let token in network['Tokens']) {
         token = tokens[token];
@@ -17,22 +16,21 @@ module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnna
             from: deployer,
             args: [
                 token.contract,
-                comptrollerUnitroller.address,
+                comptroller.address,
                 jumpRateModel_Token.address,
                 token.initialExchangeRate,
                 token.name + "'s cToken",
                 'c' + token.name,
                 18,
-                network.Admins.tokenAdmin,
+                deployer,
                 cErc20Delegate_Token.address,
                 '0x'
             ],
             log: true,
-            contract:'CErc20Delegator',
-            gasLimit:250000
+            contract:'CErc20Delegator'
         });
     }
 };
 
 module.exports.tags = ['CErc20DelegatorTokens'];
-module.exports.dependencies = ['CErc20Delegate','ComptrollerUnitroller','JumpRateModelTokens','CErc20DelegateTokens'];
+module.exports.dependencies = ['CErc20Delegate','ComptrollerUnitroller','JumpRateModelTokens','CErc20DelegateTokens','Comptroller'];
