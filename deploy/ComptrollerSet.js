@@ -36,7 +36,8 @@ module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnna
         const ctoken =await deployments.get(tokenName);
         await proxy._supportMarket(ctoken.address);
         await proxy._setCollateralFactor(ctoken.address,token.collateralFactor);
-        await execute('SimplePriceOracle', {from: network.Admins.priceOracleFeeder,log:true}, 'setUnderlyingPrice',[ctoken.address,token.initPrice]);
+        //TODO 方法找不到
+        // await execute('SimplePriceOracle', {from: network.Admins.priceOracleFeeder,log:true}, 'setUnderlyingPrice',[ctoken.address,token.initPrice]);
     }
 
     console.log("comptrolle 部署完成");
