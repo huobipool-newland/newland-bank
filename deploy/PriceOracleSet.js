@@ -10,9 +10,9 @@ module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnna
     const simplePriceOracle =await deployments.get('SimplePriceOracle');
     const priceOracleUnitroller =await deployments.get('PriceOracleUnitroller');
 
-    await execute('PriceOracleUnitroller', {from: deployer,log:true}, '_setPendingImplementation',priceOracleProxy.address);
-    await execute('PriceOracleProxy', {from: deployer,log:true}, '_become',priceOracleUnitroller.address);
-    await execute('PriceOracleUnitroller', {from: deployer,log:true}, '_setPendingAdmin',network.Admins.priceOracleAdmin);
+    await execute('PriceOracleUnitroller', {from: deployer,log:true,gasLimit:2000000}, '_setPendingImplementation',priceOracleProxy.address);
+    await execute('PriceOracleProxy', {from: deployer,log:true,gasLimit:2000000}, '_become',priceOracleUnitroller.address);
+    await execute('PriceOracleUnitroller', {from: deployer,log:true,gasLimit:2000000}, '_setPendingAdmin',deployer);
     // await execute('Unitroller', {from: ,log:true}, '_acceptAdmin');
     const unitroller=await ethers.getContract('PriceOracleUnitroller',deployer);
     await unitroller._acceptAdmin();

@@ -2,7 +2,7 @@
     "Tokens": [
         {
             "name": "HBTC",
-            "contract": "0x1D8684e6CdD65383AfFd3D5CF8263fCdA5001F13",
+            "contract": "0xeE4905086E96bfC951aC525292C6ff23E64cDa36",
             "baseRatePerYear": "200000000000000000", 
             "multiplierPerYear": "100000000000000000",
             "jumpMultiplierPerYear": "500000000000000000",
@@ -13,7 +13,7 @@
         },
         {
             "name": "ETH",
-            "contract": "0xfeB76Ae65c11B363Bd452afb4A7eC59925848656",
+            "contract": "0x941Fe6d77a62f31f3f73197C1f7b4da336a78888",
             "baseRatePerYear": "300000000000000000", 
             "multiplierPerYear": "200000000000000000",
             "jumpMultiplierPerYear": "400000000000000000",
@@ -23,8 +23,19 @@
             "collateralFactor": "800000000000000000"
         },
         {
+            "name": "HPT",
+            "contract": "0xeDF3a810B27Dbf2142af1d5B039c9e6776b6f7d3",
+            "baseRatePerYear": "300000000000000000",
+            "multiplierPerYear": "200000000000000000",
+            "jumpMultiplierPerYear": "400000000000000000",
+            "kink_": "200000000000000000",
+            "initialExchangeRate": "1000000000000000000",
+            "initPrice": "1286410000000000000000",
+            "collateralFactor": "800000000000000000"
+        },
+        {
             "name": "WHT",
-            "contract": "0x7aF326B6351C8A9b8fb8CD205CBe11d4Ac5FA836",
+            "contract": "0x74D30b3BB7270Feffa694656DC15DE711f2bE4eB",
             "baseRatePerYear": "400000000000000000", 
             "multiplierPerYear": "200000000000000000",
             "jumpMultiplierPerYear": "300000000000000000",
@@ -35,7 +46,7 @@
         },
         {
             "name": "HUSD",
-            "contract": "0x8Dd66eefEF4B503EB556b1f50880Cc04416B916B",
+            "contract": "0xD8D9E79fe4f4074C80362feC386884E6b1F2553F",
             "baseRatePerYear": "300000000000000000", 
             "multiplierPerYear": "400000000000000000",
             "jumpMultiplierPerYear": "400000000000000000",
@@ -46,7 +57,7 @@
         },
         {
             "name": "USDT",
-            "contract": "0x9893efec0c06a5c82ed76a726d12ee469fe449d8",
+            "contract": "0x4Aa54DDCf510c47feDd637968F91890DBF255bF6",
             "baseRatePerYear": "500000000000000000", 
             "multiplierPerYear": "200000000000000000",
             "jumpMultiplierPerYear": "100000000000000000",

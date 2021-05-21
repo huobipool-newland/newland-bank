@@ -31,13 +31,11 @@ module.exports = async ({ ethers,getNamedAccounts,deployments,getChainId,getUnna
 
 
     for (let index in tokens) {
-        let token=tokens[index];
+        let token = tokens[index];
         let tokenName='CErc20Delegator_'+token.name;
         const ctoken =await deployments.get(tokenName);
         await proxy._supportMarket(ctoken.address);
         await proxy._setCollateralFactor(ctoken.address,token.collateralFactor);
-        //TODO 方法找不到
-        // await execute('SimplePriceOracle', {from: network.Admins.priceOracleFeeder,log:true}, 'setUnderlyingPrice',[ctoken.address,token.initPrice]);
     }
 
     console.log("comptrolle 部署完成");
