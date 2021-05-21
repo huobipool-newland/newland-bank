@@ -152,14 +152,23 @@ contract ComptrollerV6Storage is ComptrollerV5Storage {
         address token;
         address pool;
         bytes method;
+        //key: the address of market, value: the percent of the borrow part
         mapping(address => bool) markets;    
+        mapping(address => uint256) borrowRate;    
+        uint totalAllocPoint;
+        mapping(address => uint256) marketAllocPoint;    
+        // The COMP market supply state for each market
+        mapping(address => CompMarketState) supplyState;
+        mapping(address => CompMarketState) borrowState;
+        mapping(address => mapping(address => uint)) supplierIndex;
+        mapping(address => mapping(address => uint)) borrowerIndex;
     }
+
+    /// @notice The COMP accrued but not yet transferred to each user
+    mapping(address => mapping(address => uint)) public claimAccrued;
 
     mapping(address => ClaimInfo) public claimInfos; 
     address[] public claimInfoKeys;
-
-    /// @notice The COMP market supply state for each market
-    mapping(address => mapping(address => CompMarketState)) public claimCompSupplyState;
 
     /// @notice The COMP market borrow state for each market
     mapping(address => mapping(address => CompMarketState)) public claimCompBorrowState;
@@ -170,6 +179,5 @@ contract ComptrollerV6Storage is ComptrollerV5Storage {
     /// @notice The COMP borrow index for each market for each borrower as of the last time they accrued COMP
     mapping(address => mapping(address => mapping(address => uint))) public claimCompBorrowerIndex;
 
-    /// @notice The COMP accrued but not yet transferred to each user
-    mapping(address => mapping(address => uint)) public claimAccrued;
+    address public claimContract;
 }

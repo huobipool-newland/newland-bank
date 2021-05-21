@@ -4,6 +4,7 @@ require("hardhat-spdx-license-identifier");
 require('hardhat-deploy');
 require ('hardhat-abi-exporter');
 require("@nomiclabs/hardhat-ethers");
+require('hardhat-contract-sizer');
 require("dotenv").config();
 
 let accounts = [];
@@ -120,34 +121,41 @@ module.exports = {
             host: '0.0.0.0',
             forking: {
                 enabled: true,//process.env.FORKING === "true",
-                url: `https://http-mainnet-node.huobichain.com`,
+                //url: `https://http-mainnet-node.huobichain.com`,
+                //url: `https://http-mainnet.hecochain.com`,
+                url: `https://http-mainnet.hecochain.com`,
             },
             live: true,
             saveDeployments: true,
             tags: ["test", "local"],
-            chainID: 999,
+            //chainID: 999,
+            timeout: 2000000,
         },
+        /*
         hecotest: {
             url: "https://http-testnet.hecochain.com",
             //accounts: [`0xcffee5a02647e57260a4c4641016fa745b1f567b204c97f5a3f73103404aced2`]
             accounts: [PRIVATE_KEY]
         },
+        */
     },
     solidity: {
-        compilers: [
-            {
-                version: "0.5.16",
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 200,
-                    },
-                },
-            },
-        ],
+        version: "0.5.16",
+        settings: {
+            optimizer: {
+                enabled: true,
+            }
+        }
+    },
+    contractSizer: {
+        alphaSort: true,
+        runOnCompile: true
     },
     spdxLicenseIdentifier: {
         overwrite: true,
         runOnCompile: true,
     },
+    mocha: {
+        timeout: 2000000,
+    }
 };
