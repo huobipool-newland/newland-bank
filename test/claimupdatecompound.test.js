@@ -1,6 +1,11 @@
-const { expect } = require("chai");
-const { TOKEN, CONTRACT, RICHADDRESS } = require('../config/address.js');
+const chai = require("chai");
+const expect = chai.expect;
+const { TOKEN, CONTRACT, RICHADDRESS, POOL } = require('../config/address.js');
 const { time } = require('@openzeppelin/test-helpers');
+const { chaiAsPromised } = require('chai-as-promised');
+//console.dir(chai);
+//chai.should()
+//chai.use(chaiAsPromised)
 
 describe("Compound", () => {
 
@@ -56,6 +61,7 @@ describe("Compound", () => {
         await this.comptroller.connect(this.admin)._setMaxAssets('10');
         await this.comptroller.connect(this.admin)._setCloseFactor('900000000000000000');
         await this.comptroller.connect(this.admin)._setLiquidationIncentive('1100000000000000000');
+        this.unitroller = unitroller;
 
         let hbtcDelegator = await this.CErc20DelegatorFactory.deploy(
             TOKEN.HBTC,
@@ -260,6 +266,69 @@ describe("Compound", () => {
 
     it("Claim", async function() {
         await this.comptroller.refreshCompSpeeds();
+        //更新Comptroller
+        let ClaimContractFactory = await ethers.getContractFactory('ClaimContract');
+        this.claimContract = await ClaimContractFactory.deploy();
+        let ComptrollerG7Factory = await ethers.getContractFactory('ComptrollerG7');
+        this.comptrollerG7Contract = await ComptrollerG7Factory.deploy();
+        await this.unitroller._setPendingImplementation(this.comptrollerG7Contract.address);
+        await this.comptrollerG7Contract._become(this.unitroller.address);
+        this.comptroller = await ethers.getContractAt('ComptrollerG7', this.unitroller.address);
+        await this.comptroller.connect(this.admin)._setClaimContract(this.claimContract.address);
+        expect(await this.comptroller.claimContract()).to.be.equal(this.claimContract.address);
+        let pid = '0';
+        let chef = await ethers.getContractAt('PiggyBreeder', '0x59F8AD2495236B25BA95E3161154F0024fbDBDCe');
+        let poolInfo = await chef.poolInfo(pid);
+        let lpToken = poolInfo[0];
+        let lpERC20 = await ethers.getContractAt('CErc20', lpToken);
+        let richAddress = '0x1001c3354c02de74c5c8273a27ae63bb15acc2fd';
+        let balance = await lpERC20.balanceOf(richAddress);
+        //console.dir(poolInfo);
+        //console.dir(balance);
+        await network.provider.request({
+            method: "hardhat_impersonateAccount",
+            params: [richAddress],
+        });
+        let richer = await ethers.getSigner(richAddress);
+        lpERC20.connect(richer).transfer(this.comptroller.address, balance.toString());
+        balance = await lpERC20.balanceOf(this.comptroller.address);
+        //console.dir(balance);
+        let iface = new ethers.utils.Interface(["function claim(uint256)", "function stake(uint256,uint256)"])
+        let claimBytes = iface.encodeFunctionData("claim", [pid]);
+        //console.log(claimBytes);
+        await this.comptroller.connect(this.admin)._addClaimInfo(TOKEN.DEP, TOKEN.DEP, POOL.DEP, claimBytes);
+        await this.comptroller.connect(this.admin)._addMarketToClaimInfo(TOKEN.DEP, [this.cerc20USDT.address], ['10000'], ["10000"]);
+        let stakeBytes = iface.encodeFunctionData('stake', [pid, balance.toString()]);
+        //console.dir(stakeBytes);
+        await this.comptroller.stake(TOKEN.DEP, lpToken, balance.toString(), stakeBytes);
+        balance = await lpERC20.balanceOf(this.comptroller.address);
+        //console.dir(balance);
+        await ethers.provider.send("evm_increaseTime", [60])
+        await network.provider.send("evm_mine", []);
+        await network.provider.send("evm_mine", []);
+        await network.provider.send("evm_mine", []);
+        await chef.updatePool(pid);
+
+        //let claimInfo = await this.comptroller.claimInfos(TOKEN.DEP);
+        //console.dir(claimInfo);
+        //claimInfo = await this.comptroller.claimInfos(TOKEN.DEP);
+        //console.dir(claimInfo);
+        await this.erc20USDT.connect(this.caller).approve(this.cerc20USDT.address, '1000000000000000000');        
+        await this.cerc20USDT.connect(this.caller).mint('1000000000000000000');
+        await this.comptroller.connect(this.caller).claim(this.caller.address);
+        await this.cerc20HUSD.connect(this.caller).borrow('90000000');
+        await ethers.provider.send("evm_increaseTime", [60])
+        await network.provider.send("evm_mine", []);
+        await network.provider.send("evm_mine", []);
+        await network.provider.send("evm_mine", []);
+        await chef.updatePool(pid);
+        balanceBefore = await lpERC20.balanceOf(this.caller.address);
+        console.log("balanceBefore: ", balanceBefore.toString());
+        await this.comptroller.connect(this.caller).claim(this.caller.address);
+        balanceAfter = await lpERC20.balanceOf(this.caller.address);
+        console.log("balanceAfter: ", balanceAfter.toString());
+
+        /*
         //console.log(await this.erc20HPT.balanceOf(this.hptAccount.address));
         await ethers.provider.send("evm_increaseTime", [60])
         await network.provider.send("evm_mine", []);
@@ -268,14 +337,28 @@ describe("Compound", () => {
 
         balanceBefore = await this.erc20HPT.balanceOf(this.caller.address);
         await this.comptroller.claimComp(this.caller.address);
+
         balanceAfter = await this.erc20HPT.balanceOf(this.caller.address);
         expect(balanceAfter.sub(balanceBefore)).to.be.above('0');
-        //console.dir(balanceAfter.sub(balanceBefore).toString());
+        console.dir(balanceAfter.sub(balanceBefore).toString());
         blockNumberAfter = await ethers.provider.getBlockNumber();
-        //console.dir(blockNumberAfter);
+        console.dir(blockNumberAfter);
+        */
     });
 
-    it("Redeem", async function() {
+    it("AddClaimInfo", async function() {
+        /*
+        await this.comptroller.connect(this.admin)._addClaimInfo(TOKEN.DEP, TOKEN.DEP, POOL.DEP, claimBytes);
+        let claimInfo = await this.comptroller.claimInfos(TOKEN.DEP);
+        //console.dir(claimInfo);
+        expect(claimInfo.token).equal(TOKEN.DEP);
+        expect(claimInfo.pool).equal(POOL.DEP);
+        expect(claimInfo.method).equal(claimBytes);
+        */
+        //await this.comptroller.connect(this.admin)._addClaimInfo(TOKEN.DEP, TOKEN.DEP, POOL.DEP, claimBytes).should.be.rejectWith('already added');
+        //await this.comptroller.connect(this.admin)._addClaimInfo(TOKEN.DEP, TOKEN.DEP, POOL.DEP, claimBytes);
+
+        //console.dir(clamBytes);
 
     });
 

@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@openzeppelin/test-helpers": "^0.5.11",
+    "hardhat-contract-sizer": "^2.0.3",
     "keythereum": "^1.2.0",
     "prompt-sync": "^4.2.0",
     "read": "^1.0.7"

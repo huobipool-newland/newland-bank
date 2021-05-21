@@ -145,3 +145,39 @@ contract ComptrollerV5Storage is ComptrollerV4Storage {
     /// @notice Last block at which a contributor's COMP rewards have been allocated
     mapping(address => uint) public lastContributorBlock;
 }
+
+contract ComptrollerV6Storage is ComptrollerV5Storage {
+    struct ClaimInfo {
+        uint index;
+        address token;
+        address pool;
+        bytes method;
+        //key: the address of market, value: the percent of the borrow part
+        mapping(address => bool) markets;    
+        mapping(address => uint256) borrowRate;    
+        uint totalAllocPoint;
+        mapping(address => uint256) marketAllocPoint;    
+        // The COMP market supply state for each market
+        mapping(address => CompMarketState) supplyState;
+        mapping(address => CompMarketState) borrowState;
+        mapping(address => mapping(address => uint)) supplierIndex;
+        mapping(address => mapping(address => uint)) borrowerIndex;
+    }
+
+    /// @notice The COMP accrued but not yet transferred to each user
+    mapping(address => mapping(address => uint)) public claimAccrued;
+
+    mapping(address => ClaimInfo) public claimInfos; 
+    address[] public claimInfoKeys;
+
+    /// @notice The COMP market borrow state for each market
+    mapping(address => mapping(address => CompMarketState)) public claimCompBorrowState;
+
+    /// @notice The COMP borrow index for each market for each supplier as of the last time they accrued COMP
+    mapping(address => mapping(address => mapping(address => uint))) public claimCompSupplierIndex;
+
+    /// @notice The COMP borrow index for each market for each borrower as of the last time they accrued COMP
+    mapping(address => mapping(address => mapping(address => uint))) public claimCompBorrowerIndex;
+
+    address public claimContract;
+}
