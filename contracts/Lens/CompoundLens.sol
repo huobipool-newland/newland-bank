@@ -323,4 +323,8 @@ contract CompoundLens {
         uint c = a - b;
         return c;
     }
+
+    function pending(address comptroller, address holder, address token) external returns (uint256 amounts) {
+        //mapping(address => uint256) memory tokenAmounts = new mapping(address => uint256)();     
+    }
 }

