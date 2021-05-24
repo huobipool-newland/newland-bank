@@ -57,7 +57,6 @@ const { API_URL, PRIVATE_KEY } = process.env;
     } catch (ex) {
     }
 })();
-
 module.exports = {
     defaultNetwork: "hardhat",
     abiExporter: {
@@ -71,43 +70,55 @@ module.exports = {
         deployer: {
             default: 0,
             128: '0xA8c2f5E3427a94cd8a0BC8d42DdbA574f890E2b4',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         admin: {
-            default: 1,
+            default: '0x4f7b45C407ec1B106Ba3772e0Ecc7FD4504d3b92',
             128: '0xA8c2f5E3427a94cd8a0BC8d42DdbA574f890E2b4',
+            256: '0x4f7b45C407ec1B106Ba3772e0Ecc7FD4504d3b92',
         },
         caller: {
             default: 2,
             128: '0xA8c2f5E3427a94cd8a0BC8d42DdbA574f890E2b4',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         worker: {
             default: 3,
             128: '0xA8c2f5E3427a94cd8a0BC8d42DdbA574f890E2b4',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         receiver: {
             default: 4,
             128: '0xA8c2f5E3427a94cd8a0BC8d42DdbA574f890E2b4',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         MDX:{
-            default:'0x25D2e80cB6B86881Fd7e07dd263Fb79f4AbE033c'
+            default:'0x25D2e80cB6B86881Fd7e07dd263Fb79f4AbE033c',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         MDXChef:{
-            default: '0xFB03e11D93632D97a8981158A632Dd5986F5E909'
+            default: '0xFB03e11D93632D97a8981158A632Dd5986F5E909',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         USDT:{
-            default: '0xa71edc38d189767582c38a3145b5873052c3e47a'
+            default: '0xa71edc38d189767582c38a3145b5873052c3e47a',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         HBTC:{
-            default: '0x66a79d23e58475d2738179ca52cd0b41d73f0bea'
+            default: '0x66a79d23e58475d2738179ca52cd0b41d73f0bea',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         WHT:{
-            default: '0x5545153ccfca01fbd7dd11c0b23ba694d9509a6f'
+            default: '0x5545153ccfca01fbd7dd11c0b23ba694d9509a6f',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         Factory:{
-            default: '0xb0b670fc1f7724119963018db0bfa86adb22d941'
+            default: '0xb0b670fc1f7724119963018db0bfa86adb22d941',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         Router:{
-            default: '0xED7d5F38C79115ca12fe6C0041abb22F0A06C300'
+            default: '0xED7d5F38C79115ca12fe6C0041abb22F0A06C300',
+            256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         }
     },
     networks: {
@@ -117,13 +128,20 @@ module.exports = {
             gasPrice: 1.3 * 1000000000,
             chainId: 128,
         },
+        test: {
+            url: `https://http-testnet.hecochain.com`,
+            accounts: accounts,
+            chainId: 256,
+            tags: ["test", "local"],
+        },
         hardhat: {
             host: '0.0.0.0',
             forking: {
                 enabled: true,//process.env.FORKING === "true",
                 //url: `https://http-mainnet-node.huobichain.com`,
                 //url: `https://http-mainnet.hecochain.com`,
-                url: `https://http-mainnet.hecochain.com`,
+                //url: `https://http-mainnet.hecochain.com`,
+                url: `https://http-testnet.hecochain.com`,
             },
             live: true,
             saveDeployments: true,
@@ -140,12 +158,34 @@ module.exports = {
         */
     },
     solidity: {
+        /*
         version: "0.5.16",
         settings: {
             optimizer: {
                 enabled: true,
             }
         }
+        */
+        compilers: [
+            {
+                version: "0.5.16",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200,
+                    },
+                },
+            },
+            {
+                version: "0.6.2",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200,
+                    },
+                },
+            },
+        ],
     },
     contractSizer: {
         alphaSort: true,

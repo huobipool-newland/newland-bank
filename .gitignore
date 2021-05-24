@@ -7,3 +7,6 @@ artifacts
 build
 *.env
 deployments
+
+.secret
+.keystore
