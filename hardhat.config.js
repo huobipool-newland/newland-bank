@@ -13,8 +13,6 @@ var read = require('read');
 var util = require('util');
 const keythereum = require("keythereum");
 const prompt = require('prompt-sync')();
-
-const { API_URL, PRIVATE_KEY } = process.env;
 (async function() {
     try {
         const root = '.keystore';
