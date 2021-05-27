@@ -7,3 +7,4 @@ artifacts
 build
 *.env
 deployments
+.secret

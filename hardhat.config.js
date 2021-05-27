@@ -133,13 +133,10 @@ module.exports = {
             //chainID: 999,
             timeout: 2000000,
         },
-        /*
         hecotest: {
             url: "https://http-testnet.hecochain.com",
-            //accounts: [`0xcffee5a02647e57260a4c4641016fa745b1f567b204c97f5a3f73103404aced2`]
-            accounts: [PRIVATE_KEY]
+            accounts: accounts,
         },
-        */
     },
     solidity: {
         version: "0.5.16",
