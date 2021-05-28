@@ -3,7 +3,9 @@
   "version": "0.2.1",
   "description": "The Compound Money Market",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "hecotest:verify": "hardhat --network hecotest etherscan-verify --solc-input"
+  },
   "license": "MIT",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.7",
@@ -20,7 +22,7 @@
     "ding-robot": "^1.0.0",
     "dotenv": "^8.6.0",
     "ethereum-waffle": "^3.3.0",
-    "ethers": "^5.1.0",
+    "ethers": "^5.1.4",
     "hardhat": "^2.1.0",
     "hardhat-abi-exporter": "^2.2.1",
     "hardhat-deploy": "^0.7.2",

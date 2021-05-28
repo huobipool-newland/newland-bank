@@ -13,8 +13,6 @@ var read = require('read');
 var util = require('util');
 const keythereum = require("keythereum");
 const prompt = require('prompt-sync')();
-
-const { API_URL, PRIVATE_KEY } = process.env;
 (async function() {
     try {
         const root = '.keystore';
@@ -155,13 +153,10 @@ module.exports = {
             //chainID: 999,
             timeout: 2000000,
         },
-        /*
         hecotest: {
             url: "https://http-testnet.hecochain.com",
-            //accounts: [`0xcffee5a02647e57260a4c4641016fa745b1f567b204c97f5a3f73103404aced2`]
-            accounts: [PRIVATE_KEY]
+            accounts: accounts,
         },
-        */
     },
     solidity: {
         /*

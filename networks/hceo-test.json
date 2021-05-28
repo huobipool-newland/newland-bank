@@ -2,8 +2,8 @@
     "Tokens": [
         {
             "name": "HBTC",
-            "contract": "0x66a79d23e58475d2738179ca52cd0b41d73f0bea",
-            "baseRatePerYear": "200000000000000000",
+            "contract": "0xeE4905086E96bfC951aC525292C6ff23E64cDa36",
+            "baseRatePerYear": "200000000000000000", 
             "multiplierPerYear": "100000000000000000",
             "jumpMultiplierPerYear": "500000000000000000",
             "kink_": "500000000000000000",
@@ -13,7 +13,18 @@
         },
         {
             "name": "ETH",
-            "contract": "0x64ff637fb478863b7468bc97d30a5bf3a428a1fd",
+            "contract": "0x941Fe6d77a62f31f3f73197C1f7b4da336a78888",
+            "baseRatePerYear": "300000000000000000", 
+            "multiplierPerYear": "200000000000000000",
+            "jumpMultiplierPerYear": "400000000000000000",
+            "kink_": "200000000000000000",
+            "initialExchangeRate": "1000000000000000000",
+            "initPrice": "1286410000000000000000",
+            "collateralFactor": "800000000000000000"
+        },
+        {
+            "name": "HPT",
+            "contract": "0xeDF3a810B27Dbf2142af1d5B039c9e6776b6f7d3",
             "baseRatePerYear": "300000000000000000",
             "multiplierPerYear": "200000000000000000",
             "jumpMultiplierPerYear": "400000000000000000",
@@ -24,8 +35,8 @@
         },
         {
             "name": "WHT",
-            "contract": "0x5545153ccfca01fbd7dd11c0b23ba694d9509a6f",
-            "baseRatePerYear": "400000000000000000",
+            "contract": "0x74D30b3BB7270Feffa694656DC15DE711f2bE4eB",
+            "baseRatePerYear": "400000000000000000", 
             "multiplierPerYear": "200000000000000000",
             "jumpMultiplierPerYear": "300000000000000000",
             "kink_": "100000000000000000",
@@ -34,20 +45,9 @@
             "collateralFactor": "700000000000000000"
         },
         {
-            "name": "HPT",
-            "contract": "0xe499ef4616993730ced0f31fa2703b92b50bb536",
-            "baseRatePerYear": "100000000000000000",
-            "multiplierPerYear": "500000000000000000",
-            "jumpMultiplierPerYear": "200000000000000000",
-            "kink_": "500000000000000000",
-            "initialExchangeRate": "1000000000000000000",
-            "initPrice": "3889000000000000",
-            "collateralFactor": "600000000000000000"
-        },
-        {
             "name": "HUSD",
-            "contract": "0x0298c2b32eae4da002a15f36fdf7615bea3da047",
-            "baseRatePerYear": "300000000000000000",
+            "contract": "0xD8D9E79fe4f4074C80362feC386884E6b1F2553F",
+            "baseRatePerYear": "300000000000000000", 
             "multiplierPerYear": "400000000000000000",
             "jumpMultiplierPerYear": "400000000000000000",
             "kink_": "500000000000000000",
@@ -57,8 +57,8 @@
         },
         {
             "name": "USDT",
-            "contract": "0xa71edc38d189767582c38a3145b5873052c3e47a",
-            "baseRatePerYear": "500000000000000000",
+            "contract": "0x4Aa54DDCf510c47feDd637968F91890DBF255bF6",
+            "baseRatePerYear": "500000000000000000", 
             "multiplierPerYear": "200000000000000000",
             "jumpMultiplierPerYear": "100000000000000000",
             "kink_": "500000000000000000",

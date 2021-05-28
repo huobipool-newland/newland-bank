@@ -15,3 +15,7 @@ truffle build
 ## 调试
 
 truffle console
+
+## heco测试账户
+account_address:0x392752402a231d5D7113977740e7B0b0a0E076d1
+private_key ：c476f9aa9d1326c472dec962ad039e87b78048b2be09c9985ccbe21a84116a26
