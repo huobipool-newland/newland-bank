@@ -289,8 +289,8 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
         ClaimInfo storage claimInfo = claimInfos[key];
         CompMarketState storage supplyState = claimInfo.supplyState[cToken];
         Double memory supplyIndex = Double({mantissa: supplyState.index});
-        Double memory supplierIndex = Double({mantissa: claimCompSupplierIndex[key][cToken][supplier]});
-        claimCompSupplierIndex[key][cToken][supplier] = supplyIndex.mantissa;
+        Double memory supplierIndex = Double({mantissa: claimInfo.supplierIndex[cToken][supplier]});
+        claimInfo.supplierIndex[cToken][supplier] = supplyIndex.mantissa;
 
         if (supplierIndex.mantissa == 0 && supplyIndex.mantissa > 0) {
             supplierIndex.mantissa = compInitialIndex;
@@ -329,7 +329,6 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
     }
 
     function distributeBorrowerClaim(address key, address cToken, address borrower) public {
-        console.log("mmmmmmmmmmmmmmmmmm");
         Exp memory marketBorrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
         ClaimInfo storage claimInfo = claimInfos[key];
         CompMarketState storage borrowState = claimInfo.borrowState[cToken];

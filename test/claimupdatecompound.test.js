@@ -13,7 +13,6 @@ describe("Compound", () => {
         let signers = await ethers.getSigners();
         this.admin = signers[0];
         this.caller = signers[1];
-
         let richAddress = RICHADDRESS.USDT;  //这个账户有足够多的钱
         await network.provider.request({
             method: "hardhat_impersonateAccount",
@@ -49,7 +48,6 @@ describe("Compound", () => {
 
         let ComptrollerFactory = await ethers.getContractFactory('Comptroller');
         this.comptrollerContract = await ComptrollerFactory.deploy();
-
         let UnitrollerFactory = await ethers.getContractFactory('Unitroller');
         let unitroller = await UnitrollerFactory.deploy();
         await unitroller._setPendingImplementation(this.comptrollerContract.address);
@@ -169,7 +167,6 @@ describe("Compound", () => {
         await this.comptroller.connect(this.admin)._setCompRate('100000000000000000000');
         blockNumberBefor = await ethers.provider.getBlockNumber();
         //console.dir(blockNumberBefor);
-
     });
 
     it("Mint", async function() {
@@ -327,39 +324,29 @@ describe("Compound", () => {
         await this.comptroller.connect(this.caller).claim(this.caller.address);
         balanceAfter = await lpERC20.balanceOf(this.caller.address);
         console.log("balanceAfter: ", balanceAfter.toString());
-
-        /*
-        //console.log(await this.erc20HPT.balanceOf(this.hptAccount.address));
-        await ethers.provider.send("evm_increaseTime", [60])
-        await network.provider.send("evm_mine", []);
-        await network.provider.send("evm_mine", []);
-        await network.provider.send("evm_mine", []);
-
-        balanceBefore = await this.erc20HPT.balanceOf(this.caller.address);
-        await this.comptroller.claimComp(this.caller.address);
-
-        balanceAfter = await this.erc20HPT.balanceOf(this.caller.address);
-        expect(balanceAfter.sub(balanceBefore)).to.be.above('0');
-        console.dir(balanceAfter.sub(balanceBefore).toString());
-        blockNumberAfter = await ethers.provider.getBlockNumber();
-        console.dir(blockNumberAfter);
-        */
     });
 
-    it("AddClaimInfo", async function() {
-        /*
-        await this.comptroller.connect(this.admin)._addClaimInfo(TOKEN.DEP, TOKEN.DEP, POOL.DEP, claimBytes);
-        let claimInfo = await this.comptroller.claimInfos(TOKEN.DEP);
+    it("GetClaimInfoKeysLength", async function() {
+        let length = await this.comptroller.getClaimInfoKeysLength();
+        expect(length).to.be.equal(1);
+    });
+
+    it("MarketInClaimInfo", async function() {
+        expect(await this.comptroller.marketInClaimInfo(this.cerc20USDT.address, 0)).to.be.equal(true);
+        expect(await this.comptroller.marketInClaimInfo(this.cerc20HBTC.address, 0)).to.be.equal(false);
+    });
+
+    it("MarketClaimInfo", async function() {
+        let claimInfo = await this.comptroller.marketClaimInfo(this.cerc20USDT.address, 0);
         //console.dir(claimInfo);
-        expect(claimInfo.token).equal(TOKEN.DEP);
-        expect(claimInfo.pool).equal(POOL.DEP);
-        expect(claimInfo.method).equal(claimBytes);
-        */
-        //await this.comptroller.connect(this.admin)._addClaimInfo(TOKEN.DEP, TOKEN.DEP, POOL.DEP, claimBytes).should.be.rejectWith('already added');
-        //await this.comptroller.connect(this.admin)._addClaimInfo(TOKEN.DEP, TOKEN.DEP, POOL.DEP, claimBytes);
+        expect(claimInfo.token_).to.be.equal(TOKEN.DEP);
+    });
 
-        //console.dir(clamBytes);
+    it("UserMarketClaimInfo", async function() {
+        let claimInfo = await this.comptroller.userMarketClaimInfo(this.caller.address, this.cerc20USDT.address, 0);
 
+        //console.dir(claimInfo);
+        //expect(claimInfo.token_).to.be.equal(TOKEN.DEP);
     });
 
 });

@@ -1285,42 +1285,6 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
         }
     }
 
-    /*
-    function claim(address key, address holder) public {
-        return claimAll(holder, key, allMarkets);
-    }
-
-    function claimAll(address key, address holder, CToken[] memory cTokens) public {
-        address[] memory holders = new address[](1);
-        holders[0] = holder;
-        claimAllUserAll(key, holders, cTokens, true, true);
-    }
-
-
-    function claimAllUserA(address key, address[] memory holders, CToken[] memory cTokens, bool borrowers, bool suppliers) public {
-        (bool success, ) = claimContract.claimAllUserAllKey
-        for (uint i = 0; i < cTokens.length; i++) {
-            CToken cToken = cTokens[i];
-            require(markets[address(cToken)].isListed, "market must be listed");
-            if (borrowers == true) {
-                Exp memory borrowIndex = Exp({mantissa: cToken.borrowIndex()});
-                updateClaimBorrowIndex(key, address(cToken), borrowIndex);
-                for (uint j = 0; j < holders.length; j++) {
-                    distributeBorrowerClaim(key, address(cToken), holders[j]);
-                    claimAccrued[key][holders[j]] = grantCompInternal(holders[j], claimAccrued[key][holders[j]]);
-                }
-            }
-            if (suppliers == true) {
-                updateClaimSupplyIndex(key, address(cToken));
-                for (uint j = 0; j < holders.length; j++) {
-                    distributeSupplierClaim(key, address(cToken), holders[j]);
-                    claimAccrued[key][holders[j]] = grantCompInternal(holders[j], claimAccrued[key][holders[j]]);
-                }
-            }
-        }
-    }
-    */
-
     /**
      * @notice Claim all the comp accrued by holder in all markets
      * @param holder The address to claim COMP for
@@ -1467,5 +1431,45 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
                 revert(0, 0)
             }
         }
+    }
+
+    function getClaimInfoKeysLength() external view returns (uint256) {
+        return claimInfoKeys.length;
+    }
+
+    function marketInClaimInfo(address market, uint256 claimInfoIndex) external view returns (bool) {
+        ClaimInfo storage claimInfo = claimInfos[claimInfoKeys[claimInfoIndex]];
+        return claimInfo.markets[market];
+    }
+
+    function marketClaimInfo(address market, uint256 claimInfoIndex) external view returns (
+        address token_, 
+        address pool_,
+        uint256 totalAllocPoint_, 
+        uint256 marketAllocPoint_, 
+        uint256 borrowRate_, 
+        uint224 borrowIndex_, 
+        uint32 borrowBlock_, 
+        uint224 supplyIndex_, 
+        uint32 supplyBlock_
+    ) {
+        ClaimInfo storage claimInfo = claimInfos[claimInfoKeys[claimInfoIndex]];
+        token_ = claimInfo.token;
+        pool_ = claimInfo.pool;
+        totalAllocPoint_ = claimInfo.totalAllocPoint;
+        marketAllocPoint_ = claimInfo.marketAllocPoint[market];
+        borrowIndex_ = claimInfo.borrowState[market].index;
+        borrowBlock_ = claimInfo.borrowState[market].block;
+        supplyIndex_ = claimInfo.borrowState[market].index;
+        supplyBlock_ = claimInfo.borrowState[market].block;
+    }
+
+    function userMarketClaimInfo(address user, address market, uint256 claimInfoIndex) external view returns (
+        uint256 supplierIndex_,
+        uint256 borrowerIndex_
+    ) {
+        ClaimInfo storage claimInfo = claimInfos[claimInfoKeys[claimInfoIndex]];
+        supplierIndex_ = claimInfo.supplierIndex[market][user];
+        borrowerIndex_ = claimInfo.borrowerIndex[market][user];
     }
 }

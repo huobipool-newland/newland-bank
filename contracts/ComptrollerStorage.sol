@@ -174,10 +174,10 @@ contract ComptrollerV6Storage is ComptrollerV5Storage {
     mapping(address => mapping(address => CompMarketState)) public claimCompBorrowState;
 
     /// @notice The COMP borrow index for each market for each supplier as of the last time they accrued COMP
-    mapping(address => mapping(address => mapping(address => uint))) public claimCompSupplierIndex;
+    //mapping(address => mapping(address => mapping(address => uint))) public claimCompSupplierIndex;
 
     /// @notice The COMP borrow index for each market for each borrower as of the last time they accrued COMP
-    mapping(address => mapping(address => mapping(address => uint))) public claimCompBorrowerIndex;
+    //mapping(address => mapping(address => mapping(address => uint))) public claimCompBorrowerIndex;
 
     address public claimContract;
 }

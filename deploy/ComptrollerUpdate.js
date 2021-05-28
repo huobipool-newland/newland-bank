@@ -7,7 +7,33 @@ module.exports = async function ({
     }
     const {deploy} = deployments;
     const { deployer, admin } = await ethers.getNamedSigners();
+    const { Comptroller } = await getNamedAccounts();
 
+    let unitroller = await ethers.getContractAt('Unitroller', Comptroller);
+
+    let deployResult = await deploy('ComptrollerG7', {
+        from: deployer.address,
+        args: [
+        ],
+        log: true,
+    });
+    let comptroller = await ethers.getContract('ComptrollerG7');
+
+    let imp = await unitroller.comptrollerImplementation();
+    //console.dir(imp);
+    if (imp != comptroller.address) {
+        tx = await unitroller.connect(admin)._setPendingImplementation(comptroller.address);
+        tx = await tx.wait();
+        console.dir("set pending implementation: ");
+        console.dir(tx);
+        tx = await comptroller.connect(admin)._become(unitroller.address);
+        tx = await tx.wait();
+        console.dir(comptroller.address + "become comptroller: ");
+        console.dir(tx);
+    }
+
+
+    /*
     let unitroller = await ethers.getContractAt('Unitroller', '0xac80F18DD0Bf863d91dA835784AbBe6Cd1211a95');
     let oldComptroller = await unitroller.comptrollerImplementation();
     console.dir("old comptroller: " + oldComptroller);
@@ -21,12 +47,6 @@ module.exports = async function ({
     });
     let comptrollerG7 = await ethers.getContract('ComptrollerG7');
     if (oldComptroller != comptrollerG7.address) {
-        tx = await unitroller.connect(admin)._setPendingImplementation(comptrollerG7.address);
-        console.dir("set pending implementation: ");
-        console.dir(tx);
-        tx = await comptrollerG7.connect(admin)._become(unitroller.address);
-        console.dir(comptrollerG7.address + "become comptroller: ");
-        console.dir(tx);
     }
     let comptroller = await ethers.getContractAt('ComptrollerG7', unitroller.address);
 
@@ -75,6 +95,7 @@ module.exports = async function ({
         console.dir(tx);
         //console.dir(await comptroller.claimInfos(token.address));
     }
+    */
 
 };
 

@@ -65,7 +65,7 @@ module.exports = {
         flat: true,
         // only: [],
         // except: []
-      },
+    },
     namedAccounts: {
         deployer: {
             default: 0,
@@ -73,7 +73,8 @@ module.exports = {
             256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         admin: {
-            default: '0x4f7b45C407ec1B106Ba3772e0Ecc7FD4504d3b92',
+            //default: '0x4f7b45C407ec1B106Ba3772e0Ecc7FD4504d3b92',
+            default: 1,
             128: '0xA8c2f5E3427a94cd8a0BC8d42DdbA574f890E2b4',
             256: '0x4f7b45C407ec1B106Ba3772e0Ecc7FD4504d3b92',
         },
@@ -112,6 +113,11 @@ module.exports = {
             default: '0x5545153ccfca01fbd7dd11c0b23ba694d9509a6f',
             256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
+        Comptroller: {
+            default: '0xac80F18DD0Bf863d91dA835784AbBe6Cd1211a95',
+            256: '0xac80F18DD0Bf863d91dA835784AbBe6Cd1211a95',
+            128: '0xf9Af9778cC5B8AAAEfEE646e8e3277E7242a1F88',
+        },
         Factory:{
             default: '0xb0b670fc1f7724119963018db0bfa86adb22d941',
             256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
@@ -140,8 +146,8 @@ module.exports = {
                 enabled: true,//process.env.FORKING === "true",
                 //url: `https://http-mainnet-node.huobichain.com`,
                 //url: `https://http-mainnet.hecochain.com`,
-                //url: `https://http-mainnet.hecochain.com`,
-                url: `https://http-testnet.hecochain.com`,
+                url: `https://http-mainnet.hecochain.com`,
+                //url: `https://http-testnet.hecochain.com`,
             },
             live: true,
             saveDeployments: true,
