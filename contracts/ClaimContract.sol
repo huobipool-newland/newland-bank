@@ -521,4 +521,9 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
     function getCompAddress() public pure returns (address) {
         return 0xE499Ef4616993730CEd0f31FA2703B92B50bB536;
     }
+
+    function claimAll(address holder) external  {
+        claimComp(holder);
+        claim(holder);
+    }
 }
