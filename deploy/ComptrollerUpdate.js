@@ -2,14 +2,26 @@ module.exports = async function ({
     ethers,
     getNamedAccounts,
     deployments, getChainId, getUnnamedAccounts, }) {
+    /*
     if (!hre.network.tags.test && !hre.network.tags.local) {
         return;
     }
+    */
     const {deploy} = deployments;
-    const { deployer, admin } = await ethers.getNamedSigners();
+    let { deployer, admin } = await ethers.getNamedSigners();
     const { Comptroller } = await getNamedAccounts();
+    const { cHBTC, cHETH, cWHT, cHPT, cHUSD, cUSDT } = await getNamedAccounts();
 
     let unitroller = await ethers.getContractAt('Unitroller', Comptroller);
+    let currentAdmin = await unitroller.admin();
+    //console.log("currentAdmin:", currentAdmin);
+    if (currentAdmin != admin.address && hre.network.tags.local) {
+        await network.provider.request({
+            method: "hardhat_impersonateAccount",
+            params: [currentAdmin],
+        });
+        admin = await ethers.getSigner(currentAdmin);
+    }
 
     let deployResult = await deploy('ComptrollerG7', {
         from: deployer.address,
@@ -28,76 +40,69 @@ module.exports = async function ({
         console.dir(tx);
         tx = await comptroller.connect(admin)._become(unitroller.address);
         tx = await tx.wait();
-        console.dir(comptroller.address + "become comptroller: ");
+        console.dir(comptroller.address + " become comptroller: ");
         console.dir(tx);
     }
 
-
-    /*
-    let unitroller = await ethers.getContractAt('Unitroller', '0xac80F18DD0Bf863d91dA835784AbBe6Cd1211a95');
-    let oldComptroller = await unitroller.comptrollerImplementation();
-    console.dir("old comptroller: " + oldComptroller);
-
-    let deployResult = await deploy('ComptrollerG7', {
+    comptroller = await ethers.getContractAt('ComptrollerG7', Comptroller);
+    await deploy('ClaimContract', {
         from: deployer.address,
         args: [
         ],
         log: true,
-        
     });
-    let comptrollerG7 = await ethers.getContract('ComptrollerG7');
-    if (oldComptroller != comptrollerG7.address) {
-    }
-    let comptroller = await ethers.getContractAt('ComptrollerG7', unitroller.address);
-
-    let claimContract = await comptroller.claimContract();
-    console.dir("current claim contract: " + claimContract);
-    if (claimContract == '0x0000000000000000000000000000000000000000') {
-        deployResult = await deploy('ClaimContract', {
-            from: deployer.address,
-            args: [
-            ],
-            log: true,
-        });
-        let claimContract = await ethers.getContract('ClaimContract');
+    let claimContract = await ethers.getContract('ClaimContract');
+    let currentClaimContract = await comptroller.claimContract();
+    if (currentClaimContract != claimContract.address) {
         tx = await comptroller.connect(admin)._setClaimContract(claimContract.address);
-        tx = await tx.wait()
-        console.dir("update claimContract :" + claimContract.address);
+        tx = await tx.wait();
+        console.dir("set claim contract: ");
         console.dir(tx);
     }
-
-    let token = await ethers.getContract('WePiggyToken');
-    let piggyBreeder = await ethers.getContract('PiggyBreeder');
-    
-    let hbtc = await ethers.getContractAt('CToken', '0x1d8684e6cdd65383affd3d5cf8263fcda5001f13');
-    console.log(await hbtc.balanceOf(unitroller.address));
-    let balance = await hbtc.balanceOf(unitroller.address);
-    if (balance.toString() == '0') {
-        tx = await hbtc.connect(deployer).transfer(unitroller.address, '1000000000000000000');
+    currentSpeed = await comptroller.compSpeeds(cHBTC);
+    if (currentSpeed.toString() != '1000000000000000000') {
+        console.dir("set " + cHBTC + " HPT speed to 1000000000000000000");
+        tx = await comptroller.connect(admin)._setCompSpeed(cHBTC, '1000000000000000000');
         tx = await tx.wait();
-        console.dir("transfer token to comptroller: ");
         console.dir(tx);
     }
-    let claimInfo = await comptroller.claimInfos(token.address);
-    console.dir(claimInfo);
-    if (claimInfo.token == '0x0000000000000000000000000000000000000000') {
-        let iface = new ethers.utils.Interface(["function claim(uint256)", "function stake(uint256,uint256)"])
-        let claimBytes = iface.encodeFunctionData("claim", [0]);
-        let stakeBytes = iface.encodeFunctionData('stake', [0, '1000000000000000000']);
-        console.dir(await unitroller.comptrollerImplementation());
-        tx = await comptroller.connect(admin)._addClaimInfo(token.address, token.address, piggyBreeder.address, claimBytes);
+    currentSpeed = await comptroller.compSpeeds(cHETH);
+    if (currentSpeed.toString() != '1000000000000000000') {
+        console.dir("set " + cHETH + " HPT speed to 1000000000000000000");
+        tx = await comptroller.connect(admin)._setCompSpeed(cHETH, '1000000000000000000');
         tx = await tx.wait();
-        console.dir("add claimInfo: " + token.address);
         console.dir(tx);
-        tx = await comptroller.connect(admin)._addMarketToClaimInfo(token.address, ['0xac80F18DD0Bf863d91dA835784AbBe6Cd1211a95'], ['10000'], ["10000"]);
-        tx = await tx.wait();
-        console.dir("add market usdt(0xac80F18DD0Bf863d91dA835784AbBe6Cd1211a95) to claimInfo: ");
-        console.dir(tx);
-        //console.dir(await comptroller.claimInfos(token.address));
     }
-    */
+    currentSpeed = await comptroller.compSpeeds(cWHT);
+    if (currentSpeed.toString() != '1000000000000000000') {
+        console.dir("set " + cWHT + " HPT speed to 1000000000000000000");
+        tx = await comptroller.connect(admin)._setCompSpeed(cWHT, '1000000000000000000');
+        tx = await tx.wait();
+        console.dir(tx);
+    }
+    currentSpeed = await comptroller.compSpeeds(cHPT);
+    if (currentSpeed.toString() != '1000000000000000000') {
+        console.dir("set " + cHPT + " HPT speed to 1000000000000000000");
+        tx = await comptroller.connect(admin)._setCompSpeed(cHPT, '1000000000000000000');
+        tx = await tx.wait();
+        console.dir(tx);
+    }
+    currentSpeed = await comptroller.compSpeeds(cHUSD);
+    if (currentSpeed.toString() != '1000000000000000000') {
+        console.dir("set " + cHUSD + " HPT speed to 1000000000000000000");
+        tx = await comptroller.connect(admin)._setCompSpeed(cHUSD, '1000000000000000000');
+        tx = await tx.wait();
+        console.dir(tx);
+    }
+    currentSpeed = await comptroller.compSpeeds(cUSDT);
+    if (currentSpeed.toString() != '1000000000000000000') {
+        console.dir("set " + cUSDT + " HPT speed to 1000000000000000000");
+        tx = await comptroller.connect(admin)._setCompSpeed(cUSDT, '1000000000000000000');
+        tx = await tx.wait();
+        console.dir(tx);
+    }
 
 };
 
-module.exports.tags = ['ComptrollerUpdate'];
-module.exports.dependencies = ['Breeder'];
+module.exports.tags = ['ComptrollerUpdateG7'];
+module.exports.dependencies = [];

@@ -120,7 +120,6 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
      */
     function addToMarketInternal(CToken cToken, address borrower) internal returns (Error) {
         Market storage marketToJoin = markets[address(cToken)];
-
         if (!marketToJoin.isListed) {
             // market is not listed, cannot join
             return Error.MARKET_NOT_LISTED;
@@ -226,12 +225,15 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
 
         // Keep the flywheel moving
         updateCompSupplyIndex(cToken);
-        updateClaimIndex();
+        updateClaimIndex(cToken);
         distributeSupplierComp(cToken, minter);
         for (uint i = 0; i < claimInfoKeys.length; i ++) {
             distributeSupplierClaim(claimInfoKeys[i], address(cToken), minter);
         }
 
+        if (marketSupplierWhitelistAvaliable[cToken] && !marketSupplierWhitelist[cToken][minter]) {
+            return uint(Error.MARKET_NOT_LISTED);
+        }
         return uint(Error.NO_ERROR);
     }
 
@@ -270,7 +272,7 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
 
         // Keep the flywheel moving
         updateCompSupplyIndex(cToken);
-        updateClaimIndex();
+        updateClaimIndex(cToken);
         distributeSupplierComp(cToken, redeemer);
         for (uint i = 0; i < claimInfoKeys.length; i ++) {
             distributeSupplierClaim(claimInfoKeys[i], address(cToken), redeemer);
@@ -352,7 +354,6 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
             return uint(Error.PRICE_ERROR);
         }
 
-
         uint borrowCap = borrowCaps[cToken];
         // Borrow cap of 0 corresponds to unlimited borrowing
         if (borrowCap != 0) {
@@ -372,12 +373,15 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
         // Keep the flywheel moving
         Exp memory borrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
         updateCompBorrowIndex(cToken, borrowIndex);
-        updateClaimIndex();
+        updateClaimIndex(cToken);
         distributeBorrowerComp(cToken, borrower, borrowIndex);
         for (uint i = 0; i < claimInfoKeys.length; i ++) {
              distributeBorrowerClaim(claimInfoKeys[i], cToken, borrower);
         }
 
+        if (marketBorrowerWhitelistAvaliable[cToken] && !marketBorrowerWhitelist[cToken][borrower]) {
+            return uint(Error.MARKET_NOT_LISTED);
+        }
         return uint(Error.NO_ERROR);
     }
 
@@ -424,7 +428,7 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
         // Keep the flywheel moving
         Exp memory borrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
         updateCompBorrowIndex(cToken, borrowIndex);
-        updateClaimIndex();
+        updateClaimIndex(cToken);
         distributeBorrowerComp(cToken, borrower, borrowIndex);
         for (uint i = 0; i < claimInfoKeys.length; i ++) {
              distributeBorrowerClaim(claimInfoKeys[i], cToken, borrower);
@@ -558,7 +562,7 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
 
         // Keep the flywheel moving
         updateCompSupplyIndex(cTokenCollateral);
-        updateClaimIndex();
+        updateClaimIndex(cTokenCollateral);
         distributeSupplierComp(cTokenCollateral, borrower);
         distributeSupplierComp(cTokenCollateral, liquidator);
         for (uint i = 0; i < claimInfoKeys.length; i ++) {
@@ -617,7 +621,7 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
 
         // Keep the flywheel moving
         updateCompSupplyIndex(cToken);
-        updateClaimIndex();
+        updateClaimIndex(cToken);
         distributeSupplierComp(cToken, src);
         distributeSupplierComp(cToken, dst);
         for (uint i = 0; i < claimInfoKeys.length; i ++) {
@@ -817,6 +821,26 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
     }
 
     /*** Admin Functions ***/
+
+    function _enableWhitelist(address market, bool borrowerAvaliable, bool supplierAvaliable) external returns (uint) {
+        if (msg.sender != admin) {
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_PRICE_ORACLE_OWNER_CHECK);
+        }
+        marketBorrowerWhitelistAvaliable[market] = borrowerAvaliable;
+        marketSupplierWhitelistAvaliable[market] = supplierAvaliable;
+    }
+
+    function _setWhitelist(address market, address[] calldata borrowers, address[] calldata suppliers, bool enabled) external returns (uint) {
+        if (msg.sender != admin) {
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_PRICE_ORACLE_OWNER_CHECK);
+        }
+        for (uint i = 0; i < borrowers.length; i ++) {
+            marketBorrowerWhitelist[market][borrowers[i]] = enabled;
+        }
+        for (uint i = 0; i < suppliers.length; i ++) {
+            marketSupplierWhitelist[market][suppliers[i]] = enabled;
+        }
+    }
 
     function _setClaimContract(address claimContract_) external returns (uint) {
         if (msg.sender != admin) {
@@ -1145,24 +1169,6 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
     /*** Comp Distribution ***/
 
     /**
-     * @notice Set COMP speed for a single market
-     * @param cToken The market whose COMP speed to update
-     * @param compSpeed New COMP speed for market
-     */
-    function setCompSpeedInternal(CToken cToken, uint compSpeed) internal {
-        (bool success, ) = claimContract.delegatecall( abi.encodeWithSignature(
-            "setCompSpeedInternal(address,uint256)",
-            address(cToken),
-            compSpeed
-        )); 
-        assembly {
-            if eq(success, 0) {
-                revert(0, 0)
-            }
-        }
-    }
-
-    /**
      * @notice Accrue COMP to the market by updating the supply index
      * @param cToken The market whose supply index to update
      */
@@ -1196,9 +1202,10 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
     }
 
 
-    function updateClaimIndex() internal {
+    function updateClaimIndex(address cToken) internal {
         (bool success, ) = claimContract.delegatecall( abi.encodeWithSignature(
-            "updateClaimIndex()"
+            "updateClaimIndex(address)",
+            cToken
         )); 
         assembly {
             if eq(success, 0) {
@@ -1312,7 +1319,7 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
      * @param suppliers Whether or not to claim COMP earned by supplying
      */
     function claimAllUserAllComp(address[] memory holders, CToken[] memory cTokens, bool borrowers, bool suppliers) public {
-        updateClaimIndex();
+        //updateClaimIndex();
         for (uint i = 0; i < cTokens.length; i++) {
             CToken cToken = cTokens[i];
             require(markets[address(cToken)].isListed, "market must be listed");
@@ -1396,8 +1403,16 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
      * @param compSpeed New COMP speed for market
      */
     function _setCompSpeed(CToken cToken, uint compSpeed) public {
-        require(adminOrInitializing(), "only admin can set comp speed");
-        setCompSpeedInternal(cToken, compSpeed);
+        if (false) {
+            cToken;
+            compSpeed;
+        }
+        (bool success, ) = claimContract.delegatecall(msg.data); 
+        assembly {
+            if eq(success, 0) {
+                revert(0, 0)
+            }
+        }
     }
 
     /**
@@ -1421,9 +1436,10 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
     }
 
 
-    function claimAll(address holder) external  {
+    function claimAll(address holder, CToken[] memory markets) public  {
         if (false) {
             holder;
+            markets;
         }
         (bool success, ) = claimContract.delegatecall(msg.data); 
         assembly {
@@ -1442,6 +1458,23 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
         return claimInfo.markets[market];
     }
 
+    function claimBorrowIndex(address key, address market) external view returns (uint224) {
+        return claimInfos[key].borrowState[market].index;
+    }
+
+    function claimSupplyIndex(address key, address market) external view returns (uint224) {
+        return claimInfos[key].supplyState[market].index;
+    }
+
+    function claimBorrowerIndex(address key, address market, address user) external view returns (uint256) {
+        return claimInfos[key].borrowerIndex[market][user]; 
+    }
+
+    function claimSupplierIndex(address key, address market, address user) external view returns (uint256) {
+        return claimInfos[key].supplierIndex[market][user];
+    }
+
+    /*
     function marketClaimInfo(address market, uint256 claimInfoIndex) external view returns (
         address token_, 
         address pool_,
@@ -1472,4 +1505,5 @@ contract ComptrollerG7 is ComptrollerV6Storage, ComptrollerInterface, Comptrolle
         supplierIndex_ = claimInfo.supplierIndex[market][user];
         borrowerIndex_ = claimInfo.borrowerIndex[market][user];
     }
+    */
 }

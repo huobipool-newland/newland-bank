@@ -35,4 +35,6 @@ interface PiggyBreeder {
 
     //mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
+    function pendingPiggy(uint256 _pid, address _user) external view returns (uint256);
+
 }

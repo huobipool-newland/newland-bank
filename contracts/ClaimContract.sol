@@ -107,7 +107,7 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
         if (currentCompSpeed != 0) {
             // note that COMP speed could be set to 0 to halt liquidity rewards for a market
             updateCompSupplyIndex(address(cToken));
-            updateClaimIndex();
+            updateClaimIndex(address(cToken));
         } else if (compSpeed != 0) {
             // Add the COMP market
             Market storage market = markets[address(cToken)];
@@ -181,13 +181,46 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
         }
     }
 
-    function updateClaimIndex() public {
-        for (uint j = 0; j < claimInfoKeys.length; j ++) {
-            address key = claimInfoKeys[j];
-            ClaimInfo storage claimInfo = claimInfos[key];
+    function updateClaimBorrowIndex(uint balance, address market, ClaimInfo storage claimInfo) internal {
+        uint borrowBalance = balance.mul(claimInfo.borrowRate[market]).div(10 ** 4).div(1e18);
+        CompMarketState storage borrowState = claimInfo.borrowState[market];
+        if (borrowBalance > 0) {
+            Exp memory borrowIndex = Exp({mantissa: CToken(market).borrowIndex()});
+            uint borrowAmount = div_(CToken(market).totalBorrows(), borrowIndex);
+            Double memory ratio = borrowAmount > 0 ? fraction(borrowBalance, borrowAmount) : Double({mantissa: 0});
+            Double memory index = add_(Double({mantissa: borrowState.index}), ratio);
+            claimInfo.borrowState[market] = CompMarketState({
+                index: safe224(index.mantissa, "new index exceeds 224 bits"),
+                block: safe32(getBlockNumber(), "block number exceeds 32 bits")
+            });
+        } else {
+            borrowState.block = safe32(getBlockNumber(), "block number exceeds 32 bits");
+        }
+    }
+
+    function updateClaimSupplyIndex(uint balance, address market, ClaimInfo storage claimInfo) internal {
+        uint supplyBalance = balance.sub(balance.mul(claimInfo.borrowRate[market]).div(10 ** 4)).div(1e18);
+        CompMarketState storage supplyState = claimInfo.supplyState[market];
+        if (supplyBalance > 0) {
+            uint supplyTokens = CToken(market).totalSupply();
+            Double memory ratio = supplyTokens > 0 ? fraction(supplyBalance, supplyTokens) : Double({mantissa: 0});
+            Double memory index = add_(Double({mantissa: supplyState.index}), ratio);
+            claimInfo.supplyState[market] = CompMarketState({
+                index: safe224(index.mantissa, "new index exceeds 224 bits"),
+                block: safe32(getBlockNumber(), "block number exceeds 32 bits")
+            });
+        } else {
+            supplyState.block = safe32(getBlockNumber(), "block number exceeds 32 bits");
+        }
+    }
+
+    function updateClaimIndex(address market) public {
+        for (uint i = 0; i < claimInfoKeys.length; i ++) {
+            ClaimInfo storage claimInfo = claimInfos[claimInfoKeys[i]];
+            if (!claimInfo.markets[market]) {
+                continue;
+            }
             uint balanceBefore = CToken(claimInfo.token).balanceOf(address(this));
-            //console.log("balanceBefore", balanceBefore);
-            //console.log("pool address: ", claimInfo.pool);
             (bool success, ) = claimInfo.pool.call(claimInfo.method);
             assembly {
                 if eq(success, 0) {
@@ -195,69 +228,20 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
                 }
             }
             uint balanceAfter = CToken(claimInfo.token).balanceOf(address(this));
-            //console.log("balanceAfter", balanceAfter);
-            uint blockNumber = getBlockNumber();
-            /*
-            console.log("updateClaimIndex blockNumber: ", blockNumber);
-            (uint256 p1, uint256 p2, uint256 p3, bool p4) = PiggyBreeder(claimInfo.pool).userInfo(1, address(this));
-            console.log("amount: ", p1);
-            console.log("rewardDebt: ", p2);
-            console.log("pendingReward: ", p3);
-            console.log("unStakeBeforeEnableClaim: ", p4);
-            (address token, uint256 allocPoint, uint256 lastRewardBlock, uint256 accPiggyPerShare, uint256 totalDeposit, ) = PiggyBreeder(claimInfo.pool).poolInfo(1);
-            console.log("token: ", token);
-            console.log("allocPoint: ", allocPoint);
-            console.log("lastRewardBlock: ", lastRewardBlock);
-            console.log("accPiggyPerShare: ", accPiggyPerShare);
-            console.log("totalDeposit: ", totalDeposit);
-            */
+            //uint blockNumber = getBlockNumber();
             if (balanceBefore >= balanceAfter) {
                 continue;
             }
             if (claimInfo.totalAllocPoint == 0) {
                 continue;
             }
-            console.log("balanceAfter - balanceBefor: ", balanceAfter.sub(balanceBefore));
-            //console.log("allMarkets length: ", allMarkets.length);
-            for (uint i = 0; i < allMarkets.length; i ++) {
-                //console.log(address(allMarkets[i]));
-                if (!claimInfo.markets[address(allMarkets[i])]) {
+            for (uint j = 0; j < allMarkets.length; j ++) {
+                if (!claimInfo.markets[address(allMarkets[j])]) {
                     continue;
                 }
-                console.log("abc");
-                console.log(claimInfo.totalAllocPoint);
-                uint balance = balanceAfter.sub(balanceBefore).mul(10**18).mul(claimInfo.marketAllocPoint[address(allMarkets[i])]).div(claimInfo.totalAllocPoint);
-                uint borrowBalance = balance.mul(claimInfo.borrowRate[address(allMarkets[i])]).div(10 ** 4);
-                console.log("borrowBalance: ", borrowBalance);
-                CompMarketState storage borrowState = claimInfo.borrowState[address(allMarkets[i])];
-                if (borrowBalance > 0) {
-                    Exp memory borrowIndex = Exp({mantissa: allMarkets[i].borrowIndex()});
-                    uint borrowAmount = div_(allMarkets[i].totalBorrows(), borrowIndex);
-                    Double memory ratio = borrowAmount > 0 ? fraction(borrowBalance.div(10**18), borrowAmount) : Double({mantissa: 0});
-                    Double memory index = add_(Double({mantissa: borrowState.index}), ratio);
-                    claimInfo.borrowState[address(allMarkets[i])] = CompMarketState({
-                        index: safe224(index.mantissa, "new index exceeds 224 bits"),
-                        block: safe32(blockNumber, "block number exceeds 32 bits")
-                    });
-                } else {
-                    borrowState.block = safe32(blockNumber, "block number exceeds 32 bits");
-                }
-                console.log("borrowState index: ", borrowState.index);
-                uint supplyBalance = balance.sub(borrowBalance);
-                console.log("supplyBalance: ", supplyBalance);
-                CompMarketState storage supplyState = claimInfo.supplyState[address(allMarkets[i])];
-                if (supplyBalance > 0) {
-                    uint supplyTokens = allMarkets[i].totalSupply();
-                    Double memory ratio = supplyTokens > 0 ? fraction(borrowBalance.div(10**18), supplyTokens) : Double({mantissa: 0});
-                    Double memory index = add_(Double({mantissa: supplyState.index}), ratio);
-                    claimInfo.supplyState[address(allMarkets[i])] = CompMarketState({
-                        index: safe224(index.mantissa, "new index exceeds 224 bits"),
-                        block: safe32(blockNumber, "block number exceeds 32 bits")
-                    });
-                } else {
-                    supplyState.block = safe32(blockNumber, "block number exceeds 32 bits");
-                }
-                console.log("supplyState index: ", supplyState.index);
+                uint deltaBalance = balanceAfter.sub(balanceBefore).mul(1e18).mul(claimInfo.marketAllocPoint[address(allMarkets[j])]).div(claimInfo.totalAllocPoint);
+                updateClaimBorrowIndex(deltaBalance, address(allMarkets[j]), claimInfo);
+                updateClaimSupplyIndex(deltaBalance, address(allMarkets[j]), claimInfo);
             }
         }
     }
@@ -281,6 +265,7 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
         uint supplierTokens = CToken(cToken).balanceOf(supplier);
         uint supplierDelta = mul_(supplierTokens, deltaIndex);
         uint supplierAccrued = add_(compAccrued[supplier], supplierDelta);
+        marketClaimAccrued[getCompAddress()][cToken][supplier] = add_(marketClaimAccrued[getCompAddress()][cToken][supplier], supplierDelta);
         compAccrued[supplier] = supplierAccrued;
         emit DistributedSupplierComp(CToken(cToken), supplier, supplierDelta, supplyIndex.mantissa);
     }
@@ -291,17 +276,15 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
         Double memory supplyIndex = Double({mantissa: supplyState.index});
         Double memory supplierIndex = Double({mantissa: claimInfo.supplierIndex[cToken][supplier]});
         claimInfo.supplierIndex[cToken][supplier] = supplyIndex.mantissa;
-
-        if (supplierIndex.mantissa == 0 && supplyIndex.mantissa > 0) {
-            supplierIndex.mantissa = compInitialIndex;
+        if (supplierIndex.mantissa > 0) {
+            Double memory deltaIndex = sub_(supplyIndex, supplierIndex);
+            uint supplierTokens = CToken(cToken).balanceOf(supplier);
+            uint supplierDelta = mul_(supplierTokens, deltaIndex);
+            uint supplierAccrued = add_(claimAccrued[claimInfo.token][supplier], supplierDelta);
+            marketClaimAccrued[claimInfo.token][cToken][supplier] = add_(marketClaimAccrued[claimInfo.token][cToken][supplier], supplierDelta);
+            claimAccrued[claimInfo.token][supplier] = supplierAccrued;
+            emit DistributedSupplierClaimComp(key, CToken(cToken), supplier, supplierDelta, supplyIndex.mantissa);
         }
-
-        Double memory deltaIndex = sub_(supplyIndex, supplierIndex);
-        uint supplierTokens = CToken(cToken).balanceOf(supplier);
-        uint supplierDelta = mul_(supplierTokens, deltaIndex);
-        uint supplierAccrued = add_(claimAccrued[claimInfo.token][supplier], supplierDelta);
-        claimAccrued[claimInfo.token][supplier] = supplierAccrued;
-        emit DistributedSupplierClaimComp(key, CToken(cToken), supplier, supplierDelta, supplyIndex.mantissa);
     }
 
     /**
@@ -311,18 +294,17 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
      * @param borrower The address of the borrower to distribute COMP to
      */
     function distributeBorrowerComp(address cToken, address borrower, uint256 marketBorrowIndex_) public {
-        console.log("test123sdfafjeawifjaewifji");
         Exp memory marketBorrowIndex = Exp({mantissa: marketBorrowIndex_});
         CompMarketState storage borrowState = compBorrowState[cToken];
         Double memory borrowIndex = Double({mantissa: borrowState.index});
         Double memory borrowerIndex = Double({mantissa: compBorrowerIndex[cToken][borrower]});
         compBorrowerIndex[cToken][borrower] = borrowIndex.mantissa;
-
         if (borrowerIndex.mantissa > 0) {
             Double memory deltaIndex = sub_(borrowIndex, borrowerIndex);
             uint borrowerAmount = div_(CToken(cToken).borrowBalanceStored(borrower), marketBorrowIndex);
             uint borrowerDelta = mul_(borrowerAmount, deltaIndex);
             uint borrowerAccrued = add_(compAccrued[borrower], borrowerDelta);
+            marketClaimAccrued[getCompAddress()][cToken][borrower] = add_(marketClaimAccrued[getCompAddress()][cToken][borrower], borrowerDelta);
             compAccrued[borrower] = borrowerAccrued;
             emit DistributedBorrowerComp(CToken(cToken), borrower, borrowerDelta, borrowIndex.mantissa);
         }
@@ -340,44 +322,28 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
             uint borrowerAmount = div_(CToken(cToken).borrowBalanceStored(borrower), marketBorrowIndex);
             uint borrowerDelta = mul_(borrowerAmount, deltaIndex);
             uint borrowerAccrued = add_(claimAccrued[claimInfo.token][borrower], borrowerDelta);
+            marketClaimAccrued[claimInfo.token][cToken][borrower] = add_(marketClaimAccrued[claimInfo.token][cToken][borrower], borrowerDelta);
             claimAccrued[claimInfo.token][borrower] = borrowerAccrued;
             emit DistributedBorrowerClaimComp(key, CToken(cToken), borrower, borrowerDelta, borrowIndex.mantissa);
         }
     }
 
-    function claim(address holder) public {
-        updateClaimIndex();
-        for (uint i = 0; i < allMarkets.length; i++) {
+    function claim(address holder, CToken[] memory markets) public {
+        for (uint i = 0; i < markets.length; i++) {
             for (uint j = 0; j < claimInfoKeys.length; j ++) {
-                if (!claimInfos[claimInfoKeys[j]].markets[address(allMarkets[i])]) {
+                if (!claimInfos[claimInfoKeys[j]].markets[address(markets[i])]) {
                     continue;
                 }
-                distributeBorrowerClaim(claimInfoKeys[j], address(allMarkets[i]), holder);
-                distributeSupplierClaim(claimInfoKeys[j], address(allMarkets[i]), holder);
+                updateClaimIndex(address(markets[i]));
+                distributeBorrowerClaim(claimInfoKeys[j], address(markets[i]), holder);
+                distributeSupplierClaim(claimInfoKeys[j], address(markets[i]), holder);
             }
         }
         for (uint i = 0; i < claimInfoKeys.length; i ++) {
             address token = claimInfos[claimInfoKeys[i]].token; 
-            console.log("claim token: ", token, " amount: ", claimAccrued[token][holder]);
             claimAccrued[token][holder] = grantTokenInternal(token, holder, claimAccrued[token][holder]);
-
         }
     }
-
-    /*
-    function claim(address key, address holder) public {
-        return claimAll(holder, key, allMarkets);
-    }
-
-    function claimAll(address key, address holder, CToken[] memory cTokens) public {
-        address[] memory holders = new address[](1);
-        holders[0] = holder;
-        claimAllUserAll(key, holders, cTokens, true, true);
-    }
-
-    function claimAllUserAll(address key, address[] memory holders, CToken[] memory cTokens, bool borrowers, bool suppliers) public {
-    }
-    */
 
     /**
      * @notice Claim all the comp accrued by holder in all markets
@@ -412,23 +378,27 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
             if (borrowers == true) {
                 Exp memory borrowIndex = Exp({mantissa: cToken.borrowIndex()});
                 updateCompBorrowIndex(address(cToken), borrowIndex.mantissa);
-                updateClaimIndex();
+                //updateClaimIndex();
                 for (uint j = 0; j < holders.length; j++) {
                     distributeBorrowerComp(address(cToken), holders[j], borrowIndex.mantissa);
+                    /*
                     for (uint m = 0; m < claimInfoKeys.length; m ++) {
                         distributeBorrowerClaim(claimInfoKeys[m], address(cToken), holders[j]);
                     }
+                    */
                     compAccrued[holders[j]] = grantCompInternal(holders[j], compAccrued[holders[j]]);
                 }
             }
             if (suppliers == true) {
                 updateCompSupplyIndex(address(cToken));
-                updateClaimIndex();
+                //updateClaimIndex();
                 for (uint j = 0; j < holders.length; j++) {
                     distributeSupplierComp(address(cToken), holders[j]);
+                    /*
                     for (uint m = 0; m < claimInfoKeys.length; m ++) {
                         distributeSupplierClaim(claimInfoKeys[m], address(cToken), holders[j]);
                     }
+                    */
                     compAccrued[holders[j]] = grantCompInternal(holders[j], compAccrued[holders[j]]);
                 }
             }
@@ -437,7 +407,11 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
 
     function grantTokenInternal(address token, address user, uint amount) internal returns (uint) {
         uint remaining = CToken(token).balanceOf(address(this));
+        CToken[] memory _allMarkets = allMarkets;
         if (amount > 0 && amount <= remaining) {
+            for (uint i = 0; i < _allMarkets.length; i ++) {
+                marketClaimAccrued[token][address(_allMarkets[i])][user] = 0;
+            }
             CToken(token).transfer(user, amount);
             return 0;
         }
@@ -454,7 +428,11 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
     function grantCompInternal(address user, uint amount) internal returns (uint) {
         Comp comp = Comp(getCompAddress());
         uint compRemaining = comp.balanceOf(address(this));
+        CToken[] memory _allMarkets = allMarkets;
         if (amount > 0 && amount <= compRemaining) {
+            for (uint i = 0; i < _allMarkets.length; i ++) {
+                marketClaimAccrued[getCompAddress()][address(_allMarkets[i])][user] = 0;
+            }
             comp.transfer(user, amount);
             return 0;
         }
@@ -522,8 +500,8 @@ contract ClaimContract is ComptrollerV6Storage, ComptrollerErrorReporter, Expone
         return 0xE499Ef4616993730CEd0f31FA2703B92B50bB536;
     }
 
-    function claimAll(address holder) external  {
-        claimComp(holder);
-        claim(holder);
+    function claimAll(address holder, CToken[] memory markets) public  {
+        claimAllComp(holder, markets);
+        claim(holder, markets);
     }
 }

@@ -166,6 +166,7 @@ contract ComptrollerV6Storage is ComptrollerV5Storage {
 
     /// @notice The COMP accrued but not yet transferred to each user
     mapping(address => mapping(address => uint)) public claimAccrued;
+    mapping(address => mapping(address => mapping(address => uint))) public marketClaimAccrued;
 
     mapping(address => ClaimInfo) public claimInfos; 
     address[] public claimInfoKeys;
@@ -180,4 +181,9 @@ contract ComptrollerV6Storage is ComptrollerV5Storage {
     //mapping(address => mapping(address => mapping(address => uint))) public claimCompBorrowerIndex;
 
     address public claimContract;
+
+    mapping(address => bool) marketBorrowerWhitelistAvaliable;
+    mapping(address => bool) marketSupplierWhitelistAvaliable;
+    mapping(address => mapping(address => bool)) marketBorrowerWhitelist;
+    mapping(address => mapping(address => bool)) marketSupplierWhitelist;
 }

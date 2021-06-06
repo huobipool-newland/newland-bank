@@ -4,7 +4,8 @@
   "description": "The Compound Money Market",
   "main": "index.js",
   "scripts": {
-    "hecotest:verify": "hardhat --network hecotest etherscan-verify --solc-input"
+    "hecotest:verify": "hardhat --network hecotest etherscan-verify --solc-input",
+    "hecomain:verify": "hardhat --network mainnet etherscan-verify --solc-input"
   },
   "license": "MIT",
   "devDependencies": {

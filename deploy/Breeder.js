@@ -5,12 +5,16 @@ module.exports = async function ({
     getChainId,
     getUnnamedAccounts,
 }) {
+    /*
     if (!hre.network.tags.test && !hre.network.tags.local) {
         return;
     }
+    */
     const {deploy} = deployments;
     const { deployer, admin } = await ethers.getNamedSigners();
-    let deployResult = await deploy('WePiggyToken', {
+    const { Comptroller } = await getNamedAccounts();
+
+    await deploy('WePiggyToken', {
         from: deployer.address,
         args: [
         ],
@@ -21,19 +25,44 @@ module.exports = async function ({
     await deploy('PiggyBreeder', {
         from: deployer.address,
         args: [
-            token.address, deployer.address, '1000000000000000000', 4899536, 4899536, '1',  '1000', '1'
+            token.address, '0xf23486eA173b9e5a7b73C180651c95b1CBF169B2', '2000000000000000000', 5372592, 5372592, '28800',  '1', '1'
         ],
         log: true,
         contract: 'PiggyBreederContract',
     });
 
     let piggyBreeder = await ethers.getContract('PiggyBreeder');
-    await token.grantRole(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('MINTER_ROLE')), piggyBreeder.address);
-    //await token.connect(deployer).mint(piggyBreeder.address, '1000000000000000000000000000');
+    await token.connect(deployer).grantRole(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('MINTER_ROLE')), piggyBreeder.address);
     
-    let hbtc = '0x1d8684e6cdd65383affd3d5cf8263fcda5001f13';
-    await piggyBreeder.add('1000', hbtc, '0x0000000000000000000000000000000000000000', true);
-    //function add(uint256 _allocPoint, IERC20 _lpToken, IMigrator _migrator, bool _withUpdate) public onlyOwner {
+    await deploy('MockToken0', {
+        from: deployer.address,
+        args: [
+        ],
+        log: true,
+        contract: 'WePiggyToken',
+    });
+    let mockToken0 = await ethers.getContract('MockToken0');
+    tx = await mockToken0.connect(deployer).grantRole(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('MINTER_ROLE')), deployer.address);
+    tx = await tx.wait();
+    tx = await mockToken0.connect(deployer).mint(Comptroller, '1000000000000000000');
+    tx = await tx.wait();
+    tx = await piggyBreeder.connect(deployer).add('1000', mockToken0.address, '0x0000000000000000000000000000000000000000', true);
+    tx = await tx.wait();
+
+    await deploy('MockToken1', {
+        from: deployer.address,
+        args: [
+        ],
+        log: true,
+        contract: 'WePiggyToken',
+    });
+    let mockToken1 = await ethers.getContract('MockToken1');
+    tx = await mockToken1.connect(deployer).grantRole(ethers.utils.keccak256(ethers.utils.toUtf8Bytes('MINTER_ROLE')), deployer.address);
+    tx = await tx.wait();
+    tx = await mockToken1.connect(deployer).mint(Comptroller, '1000000000000000000');
+    tx = await tx.wait();
+    tx = await piggyBreeder.connect(deployer).add('1000', mockToken1.address, '0x0000000000000000000000000000000000000000', true);
+    tx = await tx.wait();
 };
 
 module.exports.tags = ['Breeder'];
