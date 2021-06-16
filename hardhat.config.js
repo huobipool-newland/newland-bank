@@ -157,7 +157,23 @@ module.exports = {
         Router:{
             default: '0xED7d5F38C79115ca12fe6C0041abb22F0A06C300',
             256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
-        }
+        },
+        DEP: {
+            default: '0x41b9787b41323cbb2000c39fb9ca4c325703b948',
+            128: '0x41b9787b41323cbb2000c39fb9ca4c325703b948',
+        },
+        DepPool: {
+            default: '0x6B2F65bf9Af9CeC78ABA50c57E15232cA3A56C20',
+            128: '0x6B2F65bf9Af9CeC78ABA50c57E15232cA3A56C20',
+        },
+        DepMockToken0: {
+            default: '0x17ba53223f78e03102CDCeD9E7688934B5796ccc',
+            128: '0x17ba53223f78e03102CDCeD9E7688934B5796ccc',
+        },
+        DepMockToken1: {
+            default: '0x4497912E3BB916dEc34A5353B808A1F001f115AA',
+            128: '0x4497912E3BB916dEc34A5353B808A1F001f115AA',
+        },
     },
     networks: {
         mainnet: {
