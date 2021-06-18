@@ -7,14 +7,15 @@ module.exports = async function ({
 }) {
     const {deploy} = deployments;
     const { deployer, admin } = await ethers.getNamedSigners();
-    const { oracleFeeder } = await getNamedAccounts();
+    const { oracleFeeder, SimplePriceOracle } = await getNamedAccounts();
     //console.log(oracleFeeder);
+    /*
     await deploy('SimplePriceOracle', {
         from: deployer.address,
         args: [oracleFeeder],
         log: true,
     });
-
+    */
     await deploy('PriceOracleProxy_Impl', {
         from: deployer.address,
         args: [],
@@ -40,7 +41,7 @@ module.exports = async function ({
     tx = await priceOracleProxy.connect(admin)._acceptAdmin();
     tx = await tx.wait();
 
-    let simplePriceOracle = await ethers.getContract('SimplePriceOracle');
+    let simplePriceOracle = await ethers.getContractAt('SimplePriceOracle', SimplePriceOracle);
     let priceOracle = await ethers.getContractAt('PriceOracleProxy', priceOracleProxy.address);
     tx = await priceOracle.connect(admin)._setUnderlying(simplePriceOracle.address);
     tx = await tx.wait();

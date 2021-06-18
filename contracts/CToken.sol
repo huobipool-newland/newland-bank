@@ -457,6 +457,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         borrowIndex = borrowIndexNew;
         totalBorrows = totalBorrowsNew;
         totalReserves = totalReservesNew;
+        accrueInterestNotify(); 
 
         /* We emit an AccrueInterest event */
         emit AccrueInterest(cashPrior, interestAccumulated, borrowIndexNew, totalBorrowsNew);
@@ -1416,6 +1417,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      */
     function doTransferOut(address payable to, uint amount) internal;
 
+    function accrueInterestNotify() internal;
 
     /*** Reentrancy Guard ***/
 

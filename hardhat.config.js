@@ -174,6 +174,14 @@ module.exports = {
             default: '0x4497912E3BB916dEc34A5353B808A1F001f115AA',
             128: '0x4497912E3BB916dEc34A5353B808A1F001f115AA',
         },
+        CLendbridge: {
+            default: '0x15ef0829cdE979b507c12c5f6917284E1A22b59a',
+            128: '0x15ef0829cdE979b507c12c5f6917284E1A22b59a',
+        },
+        SimplePriceOracle: {
+            default: '0x9E28E7058DAa5bEA0cb4652d791100001E705D05',
+            128: '0x9E28E7058DAa5bEA0cb4652d791100001E705D05',
+        }
     },
     networks: {
         mainnet: {
@@ -181,6 +189,7 @@ module.exports = {
             accounts: accounts,
             gasPrice: 1.3 * 1000000000,
             chainId: 128,
+            gasMultiplier: 1.5,
         },
         test: {
             url: `https://http-testnet.hecochain.com`,

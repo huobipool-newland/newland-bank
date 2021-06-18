@@ -230,6 +230,7 @@ contract CTokenInterface is CTokenStorage {
     function getCash() external view returns (uint);
     function accrueInterest() public returns (uint);
     function seize(address liquidator, address borrower, uint seizeTokens) external returns (uint);
+    //function accrueInterestNotify() public;
 
 
     /*** Admin Functions ***/
@@ -301,4 +302,20 @@ contract CDelegateInterface is CDelegationStorage {
      * @notice Called by the delegator on a delegate to forfeit its responsibility
      */
     function _resignImplementation() public;
+}
+
+contract AccrueInterestStorage {
+
+    struct AccrueInterestNotifier {
+        address notifier;
+        bytes data;
+        bool required;
+    }
+
+    AccrueInterestNotifier[] public notifiers;
+}
+
+contract AccrueInterestInterface is AccrueInterestStorage {
+    function _addAccrueInterestNotifier(address _notifier, bytes calldata _data, bool _required) external;
+    function _delAccreuInterestNotifier(uint256 id) external;
 }

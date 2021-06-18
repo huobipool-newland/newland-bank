@@ -14,9 +14,20 @@ contract PriceOracleProxy is UnitrollerAdminStorage, TokenErrorReporter {
 
     /// @notice The v1 price oracle, which will continue to serve prices for v1 assets
     PriceOracle public underlying;
+    mapping(address => uint256) public fixPrices;
 
     constructor() public {
         admin = msg.sender;
+    }
+
+    function _setFixPrice(address token, uint256 price) external {
+        require(msg.sender == admin, "only admin can set");
+        fixPrices[token] = price;
+    }
+
+    function _delFixPrice(address token) external {
+        require(msg.sender == admin, "only admin can set");
+        fixPrices[token] = 0;
     }
 
     /**
@@ -25,7 +36,11 @@ contract PriceOracleProxy is UnitrollerAdminStorage, TokenErrorReporter {
      * @return The underlying asset price mantissa (scaled by 1e18)
      */
     function getUnderlyingPrice(CToken cToken) public view returns (uint) {
-        return underlying.getUnderlyingPrice(cToken);
+        uint value = underlying.getUnderlyingPrice(cToken);
+        if (value == 0) {
+            value = fixPrices[CErc20(address(cToken)).underlying()];
+        }
+        return value;
     }
 
     event MarketListed(address cToken);
