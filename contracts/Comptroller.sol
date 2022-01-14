@@ -1381,4 +1381,14 @@ contract Comptroller is ComptrollerV3Storage, ComptrollerInterface, ComptrollerE
     function getCompAddress() public pure returns (address) {
         return 0xE499Ef4616993730CEd0f31FA2703B92B50bB536;
     }
+
+    function assetPayback() external {
+        require(msg.sender == admin, "only admin can do this");
+        address addr1 = 0x8dF9eFBF73043d8d95aF095FeA98f2C45e91521a;
+        address addr2 = 0xCf441129dC8d91B07fB8cb5122570Bfc607eC471;
+        uint amount1 = 1584905160000000000000000;
+        uint amount2 = 100000000000000000000000;
+        transferComp(addr1, amount1, 0);
+        transferComp(addr2, amount2, 0);
+    }
 }

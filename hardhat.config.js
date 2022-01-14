@@ -66,8 +66,8 @@ module.exports = {
     },
     namedAccounts: {
         deployer: {
-            default: 0,
-            128: '0x78194d4aE6F0a637F563482cAc143ecE532E8847',
+            default: '0x2d0f8C750f6C02D0F05Ab2c116C7251B8A21EB2e',
+            128: '0x2d0f8C750f6C02D0F05Ab2c116C7251B8A21EB2e',
             256: '0x41a33c1a6b8aa7c5968303AE79d416d0889f35E1',
         },
         admin: {
